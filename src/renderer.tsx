@@ -1,10 +1,18 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import Login from './pages/auth/Login';
+import { BrowserRouter } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import { AppRouter } from './components/routing/AppRouter';
 import './index.css';
 
 const App = () => {
-  return <Login />;
+  return (
+    <AuthProvider>
+      <BrowserRouter>
+        <AppRouter />
+      </BrowserRouter>
+    </AuthProvider>
+  );
 };
 
 const container = document.getElementById('root');

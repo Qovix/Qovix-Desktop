@@ -1,18 +1,77 @@
 import { useState } from 'react';
 import { motion } from 'motion/react';
-import { Lock, Mail } from 'lucide-react';
+import { Lock, Mail, Eye, EyeOff } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { AnimatedBackground, Button, Input, Label } from '../../components';
 import { cn } from '../../utils/utils';
+import { useAuth } from '../../context/AuthContext';
+import { useAppNavigation } from '../../hooks/useAppNavigation';
+import { ROUTES } from '../../components/routing/routes';
 
 export default function Login() {
+  const { login } = useAuth();
+  const { goToApp, goToAuth, getFromState } = useAppNavigation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [emailFocused, setEmailFocused] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Login attempt:', { email, password });
+    setError('');
+
+    if (!email || !password) {
+      setError('Please fill in all fields');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const response = await fetch('http://localhost:8080/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email.toLowerCase(),
+          password: password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (data.error === 'invalid_credentials') {
+          setError('Invalid email or password');
+        } else {
+          setError(data.message || 'Login failed. Please try again.');
+        }
+        return;
+      }
+
+      login(data.data.token, data.data.user);
+      
+      if (data.data.user.is_verified) {
+        const from = getFromState();
+        if (from) {
+          goToApp.dashboard(true);
+        } else {
+          goToApp.dashboard(true);
+        }
+      } else {
+        goToAuth.verifyEmail(true);
+      }
+
+    } catch (error) {
+      console.error('Login error:', error);
+      setError('Network error. Please check your connection and try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -62,6 +121,16 @@ export default function Login() {
           className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-gray-100 p-8"
         >
           <form onSubmit={handleSubmit} className="space-y-6">
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm"
+              >
+                {error}
+              </motion.div>
+            )}
+
             <div className="space-y-2">
               <Label htmlFor="email" className="text-gray-700">
                 Email Address
@@ -112,64 +181,44 @@ export default function Login() {
                 />
                 <Input
                   id="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   onFocus={() => setPasswordFocused(true)}
                   onBlur={() => setPasswordFocused(false)}
                   placeholder="••••••••"
                   className={cn(
-                    "pl-10 h-12 border border-gray-300 rounded-md bg-white transition-all duration-300 outline-none",
+                    "pl-10 pr-10 h-12 border border-gray-300 rounded-md bg-white transition-all duration-300 outline-none",
                     passwordFocused ? "border-[#bc3a08]" : "border-gray-300"
                   )}
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
               </motion.div>
             </div>
 
             <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
               <Button
                 type="submit"
-                className="w-full h-12 text-white relative overflow-hidden group"
-                style={{ backgroundColor: '#bc3a08' }}
+                disabled={isLoading}
+                className="w-full h-12 bg-gradient-to-r from-[#bc3a08] to-[#d4471a] hover:from-[#a63507] hover:to-[#bc3a08] text-white font-medium rounded-md transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <motion.span
-                  className="absolute inset-0 bg-white/20"
-                  initial={{ x: '-100%' }}
-                  whileHover={{ x: '100%' }}
-                  transition={{ duration: 0.5 }}
-                />
-                <span className="relative">Sign In</span>
+                {isLoading ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    Signing In...
+                  </div>
+                ) : (
+                  'Sign In'
+                )}
               </Button>
             </motion.div>
-
-            <div className="flex items-center justify-center gap-3 mt-6">
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-                className="flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-xl shadow-sm bg-white hover:bg-gray-50 transition-all"
-              >
-                <img
-                  src="https://www.svgrepo.com/show/475656/google-color.svg"
-                  alt="Google"
-                  className="w-5 h-5"
-                />
-                <span className="text-gray-700 font-medium text-sm">Google</span>
-              </motion.button>
-
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-                className="flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-xl shadow-sm bg-white hover:bg-gray-50 transition-all"
-              >
-                <img
-                  src="https://www.svgrepo.com/show/512317/github-142.svg"
-                  alt="GitHub"
-                  className="w-5 h-5"
-                />
-                <span className="text-gray-700 font-medium text-sm">GitHub</span>
-              </motion.button>
-            </div>
 
             <div className="relative mt-6">
               <div className="absolute inset-0 flex items-center">
@@ -183,19 +232,15 @@ export default function Login() {
             </div>
 
             <div className="text-center">
-              <a
-                href="#"
-                className="hover:underline inline-flex items-center gap-1"
-                style={{ color: '#bc3a08' }}
-              >
-                Create an account
-                <motion.span
-                  animate={{ x: [0, 5, 0] }}
-                  transition={{ duration: 1.5, repeat: Infinity }}
+              <p className="text-sm text-gray-600">
+                Don't have an account?{' '}
+                <Link
+                  to={ROUTES.AUTH.SIGNUP}
+                  className="text-[#bc3a08] hover:text-[#a63507] font-medium transition-colors"
                 >
-                  →
-                </motion.span>
-              </a>
+                  Sign up
+                </Link>
+              </p>
             </div>
           </form>
 
