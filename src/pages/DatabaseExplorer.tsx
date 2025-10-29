@@ -185,12 +185,23 @@ export default function DatabaseExplorer({ database, onBack }: DatabaseExplorerP
       { name: 'name', type: 'varchar(255)', nullable: false },
       { name: 'email', type: 'varchar(255)', nullable: false },
       { name: 'created_at', type: 'timestamp', nullable: false },
+      { name: 'created_at', type: 'timestamp', nullable: false },
+      { name: 'created_at', type: 'timestamp', nullable: false },
+      { name: 'created_at', type: 'timestamp', nullable: false },
+      { name: 'created_at', type: 'timestamp', nullable: false },
+      { name: 'created_at', type: 'timestamp', nullable: false },
     ];
 
-    const mockData = Array.from({ length: 25 }, (_, i) => ({
+    const mockData = Array.from({ length: 65 }, (_, i) => ({
       id: i + 1,
       name: `User ${i + 1}`,
       email: `user${i + 1}@example.com`,
+
+      des:'sfsdf',
+      ordreId:'ssdf',
+      vffd:"df",
+      df:'df',
+      dfgd:'dg',
       created_at: new Date(Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 30).toISOString(),
     }));
 

@@ -13,8 +13,7 @@ import {
   Trash2,
   Copy
 } from 'lucide-react';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
+import { Button, Input } from '../ui';
 
 interface TableColumn {
   name: string;
@@ -176,7 +175,7 @@ const TableDataView: React.FC<TableDataViewProps> = ({
 
   return (
     <div className="h-full flex flex-col bg-white">
-      <div className="border-b border-gray-200 p-4">
+      <div className="flex-shrink-0 border-b border-gray-200 p-4 bg-white">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-lg font-semibold text-gray-900">{tableName}</h2>
@@ -250,112 +249,174 @@ const TableDataView: React.FC<TableDataViewProps> = ({
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto">
-        <table className="w-full">
-          <thead className="bg-gray-50 sticky top-0">
-            <tr>
-              <th className="w-12 px-4 py-3 text-left">
-                <input
-                  type="checkbox"
-                  checked={selectedRows.size === paginatedData.length && paginatedData.length > 0}
-                  onChange={handleSelectAll}
-                  className="rounded border-gray-300 text-[#bc3a08] focus:ring-[#bc3a08]"
-                />
-              </th>
-              {columns.map((column) => (
-                <th
-                  key={column.name}
-                  className="px-4 py-3 text-left border-b border-gray-200"
-                >
-                  <button
-                    onClick={() => handleSort(column.name)}
-                    className="flex items-center space-x-2 hover:bg-gray-100 rounded p-1 -m-1 group"
+      {/* Table Section - Scrollable */}
+      <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, overflow: 'auto' }}>
+          <div style={{ minWidth: 'fit-content' }}>
+            <table style={{ borderCollapse: 'collapse', width: 'max-content' }}>
+              <thead>
+                <tr>
+                  <th style={{ 
+                    position: 'sticky',
+                    top: 0,
+                    left: 0,
+                    zIndex: 30,
+                    backgroundColor: '#f9fafb',
+                    padding: 12,
+                    textAlign: 'left',
+                    borderBottom: '1px solid #e5e7eb',
+                    borderRight: '1px solid #e5e7eb',
+                    minWidth: 48
+                  }}>
+                    <input
+                      type="checkbox"
+                      checked={selectedRows.size === paginatedData.length && paginatedData.length > 0}
+                      onChange={handleSelectAll}
+                      style={{ borderRadius: 4 }}
+                    />
+                  </th>
+                  {columns.map((column) => (
+                    <th
+                      key={column.name}
+                      style={{
+                        position: 'sticky',
+                        top: 0,
+                        zIndex: 20,
+                        padding: 12,
+                        textAlign: 'left',
+                        borderBottom: '1px solid #e5e7eb',
+                        backgroundColor: '#f9fafb',
+                        minWidth: 150,
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      <button
+                        onClick={() => handleSort(column.name)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 8,
+                          padding: 4,
+                          margin: -4,
+                          border: 'none',
+                          background: 'transparent',
+                          cursor: 'pointer',
+                          width: '100%'
+                        }}
+                      >
+                        <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <span style={{ fontSize: 14, fontWeight: 500, color: '#111827' }}>
+                              {column.name}
+                            </span>
+                            {column.primaryKey && (
+                              <span style={{ fontSize: 11, color: '#ca8a04', fontWeight: 700 }}>PK</span>
+                            )}
+                            {column.foreignKey && (
+                              <span style={{ fontSize: 11, color: '#2563eb', fontWeight: 700 }}>FK</span>
+                            )}
+                          </div>
+                          <span style={{ fontSize: 11, color: getColumnTypeColor(column.type) }}>
+                            {column.type} {!column.nullable && '• NOT NULL'}
+                          </span>
+                        </div>
+                        <div style={{ flexShrink: 0 }}>
+                          {getSortIcon(column.name)}
+                        </div>
+                      </button>
+                    </th>
+                  ))}
+                  <th style={{
+                    position: 'sticky',
+                    top: 0,
+                    right: 0,
+                    zIndex: 30,
+                    backgroundColor: '#f9fafb',
+                    padding: 12,
+                    textAlign: 'left',
+                    borderBottom: '1px solid #e5e7eb',
+                    borderLeft: '1px solid #e5e7eb',
+                    minWidth: 100
+                  }}>
+                    <MoreHorizontal style={{ width: 16, height: 16, color: '#9ca3af' }} />
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedData.map((row, index) => (
+                  <tr 
+                    key={index}
+                    style={{
+                      borderBottom: '1px solid #f3f4f6',
+                      backgroundColor: selectedRows.has(index) ? '#eff6ff' : 'white'
+                    }}
                   >
-                    <div className="flex flex-col">
-                      <div className="flex items-center space-x-1">
-                        <span className="text-sm font-medium text-gray-900">
-                          {column.name}
-                        </span>
-                        {column.primaryKey && (
-                          <span className="text-xs text-yellow-600 font-bold">PK</span>
-                        )}
-                        {column.foreignKey && (
-                          <span className="text-xs text-blue-600 font-bold">FK</span>
-                        )}
+                    <td style={{
+                      position: 'sticky',
+                      left: 0,
+                      zIndex: 10,
+                      backgroundColor: selectedRows.has(index) ? '#eff6ff' : 'white',
+                      padding: 12,
+                      borderRight: '1px solid #f3f4f6'
+                    }}>
+                      <input
+                        type="checkbox"
+                        checked={selectedRows.has(index)}
+                        onChange={() => handleRowSelect(index)}
+                        style={{ borderRadius: 4 }}
+                      />
+                    </td>
+                    {columns.map((column) => (
+                      <td key={column.name} style={{ padding: 12, fontSize: 14, whiteSpace: 'nowrap' }}>
+                        {formatCellValue(row[column.name], column)}
+                      </td>
+                    ))}
+                    <td style={{
+                      position: 'sticky',
+                      right: 0,
+                      zIndex: 10,
+                      backgroundColor: selectedRows.has(index) ? '#eff6ff' : 'white',
+                      padding: 12,
+                      borderLeft: '1px solid #f3f4f6'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <button
+                          onClick={() => onEditRow(row, index)}
+                          style={{ padding: 4, border: 'none', background: 'transparent', borderRadius: 4, cursor: 'pointer', color: '#4b5563' }}
+                          title="Edit row"
+                        >
+                          <Edit style={{ width: 14, height: 14 }} />
+                        </button>
+                        <button
+                          onClick={() => navigator.clipboard.writeText(JSON.stringify(row))}
+                          style={{ padding: 4, border: 'none', background: 'transparent', borderRadius: 4, cursor: 'pointer', color: '#4b5563' }}
+                          title="Copy row"
+                        >
+                          <Copy style={{ width: 14, height: 14 }} />
+                        </button>
+                        <button
+                          onClick={() => onDeleteRow(row, index)}
+                          style={{ padding: 4, border: 'none', background: 'transparent', borderRadius: 4, cursor: 'pointer', color: '#4b5563' }}
+                          title="Delete row"
+                        >
+                          <Trash2 style={{ width: 14, height: 14 }} />
+                        </button>
                       </div>
-                      <span className={`text-xs ${getColumnTypeColor(column.type)}`}>
-                        {column.type} {!column.nullable && '• NOT NULL'}
-                      </span>
-                    </div>
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                      {getSortIcon(column.name)}
-                    </div>
-                  </button>
-                </th>
-              ))}
-              <th className="w-12 px-4 py-3 text-left">
-                <MoreHorizontal className="h-4 w-4 text-gray-400" />
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {paginatedData.map((row, index) => (
-              <tr 
-                key={index} 
-                className={`border-b border-gray-100 hover:bg-gray-50 ${
-                  selectedRows.has(index) ? 'bg-blue-50' : ''
-                }`}
-              >
-                <td className="px-4 py-3">
-                  <input
-                    type="checkbox"
-                    checked={selectedRows.has(index)}
-                    onChange={() => handleRowSelect(index)}
-                    className="rounded border-gray-300 text-[#bc3a08] focus:ring-[#bc3a08]"
-                  />
-                </td>
-                {columns.map((column) => (
-                  <td key={column.name} className="px-4 py-3 text-sm">
-                    {formatCellValue(row[column.name], column)}
-                  </td>
+                    </td>
+                  </tr>
                 ))}
-                <td className="px-4 py-3">
-                  <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                      onClick={() => onEditRow(row, index)}
-                      className="p-1 hover:bg-gray-200 rounded text-gray-600 hover:text-blue-600"
-                      title="Edit row"
-                    >
-                      <Edit className="h-3 w-3" />
-                    </button>
-                    <button
-                      onClick={() => navigator.clipboard.writeText(JSON.stringify(row))}
-                      className="p-1 hover:bg-gray-200 rounded text-gray-600 hover:text-green-600"
-                      title="Copy row"
-                    >
-                      <Copy className="h-3 w-3" />
-                    </button>
-                    <button
-                      onClick={() => onDeleteRow(row, index)}
-                      className="p-1 hover:bg-gray-200 rounded text-gray-600 hover:text-red-600"
-                      title="Delete row"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+              </tbody>
+            </table>
+          </div>
+        </div>
 
         {paginatedData.length === 0 && (
-          <div className="flex items-center justify-center py-12">
-            <div className="text-center">
-              <Search className="h-8 w-8 text-gray-300 mx-auto mb-2" />
-              <p className="text-gray-500">No data found</p>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 48 }}>
+            <div style={{ textAlign: 'center' }}>
+              <Search style={{ width: 32, height: 32, color: '#d1d5db', margin: '0 auto 8px' }} />
+              <p style={{ color: '#6b7280', margin: 0 }}>No data found</p>
               {searchTerm && (
-                <p className="text-sm text-gray-400 mt-1">
+                <p style={{ fontSize: 14, color: '#9ca3af', marginTop: 4 }}>
                   Try adjusting your search terms
                 </p>
               )}
@@ -364,35 +425,39 @@ const TableDataView: React.FC<TableDataViewProps> = ({
         )}
       </div>
 
+      {/* Pagination - Fixed */}
       {totalPages > 1 && (
-        <div className="border-t border-gray-200 px-4 py-3 flex items-center justify-between">
-          <div className="text-sm text-gray-600">
+        <div style={{ flexShrink: 0, borderTop: '1px solid #e5e7eb', padding: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: 'white' }}>
+          <div style={{ fontSize: 14, color: '#4b5563' }}>
             Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, sortedData.length)} of {sortedData.length} results
           </div>
           
-          <div className="flex items-center space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button
               onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
               disabled={currentPage === 1}
+              style={{ padding: '6px 12px', fontSize: 14, border: '1px solid #d1d5db', borderRadius: 6, backgroundColor: 'white', cursor: currentPage === 1 ? 'not-allowed' : 'pointer', opacity: currentPage === 1 ? 0.5 : 1, display: 'flex', alignItems: 'center' }}
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft style={{ width: 16, height: 16, marginRight: 4 }} />
               Previous
-            </Button>
+            </button>
             
-            <div className="flex items-center space-x-1">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
               {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                 const page = i + 1;
                 return (
                   <button
                     key={page}
                     onClick={() => setCurrentPage(page)}
-                    className={`px-3 py-1 rounded text-sm ${
-                      currentPage === page
-                        ? 'bg-[#bc3a08] text-white'
-                        : 'text-gray-600 hover:bg-gray-100'
-                    }`}
+                    style={{
+                      padding: '4px 12px',
+                      borderRadius: 6,
+                      fontSize: 14,
+                      border: 'none',
+                      cursor: 'pointer',
+                      backgroundColor: currentPage === page ? '#2563eb' : 'transparent',
+                      color: currentPage === page ? 'white' : '#4b5563'
+                    }}
                   >
                     {page}
                   </button>
@@ -400,15 +465,14 @@ const TableDataView: React.FC<TableDataViewProps> = ({
               })}
             </div>
             
-            <Button
-              variant="outline"
-              size="sm"
+            <button
               onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
               disabled={currentPage === totalPages}
+              style={{ padding: '6px 12px', fontSize: 14, border: '1px solid #d1d5db', borderRadius: 6, backgroundColor: 'white', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer', opacity: currentPage === totalPages ? 0.5 : 1, display: 'flex', alignItems: 'center' }}
             >
               Next
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+              <ChevronRight style={{ width: 16, height: 16, marginLeft: 4 }} />
+            </button>
           </div>
         </div>
       )}
