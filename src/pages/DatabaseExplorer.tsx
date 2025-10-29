@@ -20,7 +20,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import TableDataView from '../components/database/TableDataView';
 import AIQueryAssistant from '../components/database/AIQueryAssistant';
-import { useAppNavigation } from '../hooks/useAppNavigation';
+import { useTabContext } from '../context/TabContext';
 
 interface DatabaseTable {
   name: string;
@@ -128,7 +128,7 @@ interface DatabaseExplorerProps {
 }
 
 export default function DatabaseExplorer({ database, onBack }: DatabaseExplorerProps) {
-  const { goToApp } = useAppNavigation();
+  const { openTab } = useTabContext();
   const [schema, setSchema] = useState<DatabaseSchema>({
     name: database.name,
     tables: [
@@ -229,52 +229,51 @@ export default function DatabaseExplorer({ database, onBack }: DatabaseExplorerP
   ) || [];
 
   return (
-    <div className="h-screen w-full bg-white flex flex-col">
-      <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <Button
-            variant="ghost"
-            onClick={onBack}
-            className="p-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          
+    <div className="h-full w-full bg-white flex flex-col">
+      {/* Database Explorer Header */}
+      <div className="bg-white border-b border-gray-200 px-6 py-4">
+        <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="flex items-center space-x-2">
-              <Database className="h-5 w-5 text-[#bc3a08]" />
-              <div>
-                <h1 className="font-semibold text-gray-900">{database.name}</h1>
-                <p className="text-xs text-gray-500">
-                  {database.type} • {database.host}:{database.port}
-                </p>
-              </div>
+            <Database className="h-5 w-5 text-[#bc3a08]" />
+            <div>
+              <h1 className="font-semibold text-gray-900">{database.name}</h1>
+              <p className="text-xs text-gray-500">
+                {database.type} • {database.host}:{database.port}
+              </p>
             </div>
           </div>
-        </div>
 
-        <div className="flex items-center space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="text-gray-600 hover:text-gray-900"
-          >
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
-          </Button>
-          
-          <Button
-            onClick={() => goToApp.queryConsole(database.id)}
-            size="sm"
-            className="bg-[#bc3a08] hover:bg-[#a0340a] text-white"
-          >
-            <Terminal className="h-4 w-4 mr-2" />
-            Query Console
-          </Button>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-gray-600 hover:text-gray-900"
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh
+            </Button>
+            
+            <Button
+              onClick={() => openTab({
+                id: `console-${database.id}`,
+                type: 'query-console',
+                title: `Console: ${database.name}`,
+                data: {
+                  database: database,
+                  initialQuery: ''
+                }
+              })}
+              size="sm"
+              className="bg-[#bc3a08] hover:bg-[#a0340a] text-white"
+            >
+              <Terminal className="h-4 w-4 mr-2" />
+              Query Console
+            </Button>
+          </div>
         </div>
-      </header>
+      </div>
 
-      <div className="flex-1 flex">
+      <div className="flex-1 flex overflow-hidden">
         <div className="w-80 bg-gray-50 border-r border-gray-200 flex flex-col">
           <div className="p-4 border-b border-gray-200">
             <div className="relative">

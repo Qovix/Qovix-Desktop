@@ -1,57 +1,14 @@
 import React from 'react';
-import { Routes, Route, Navigate, useParams } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { ProtectedRoute, PublicRoute } from './RouteGuards';
 import { ROUTES } from './routes';
-import { useAppNavigation } from '../../hooks/useAppNavigation';
+import { TabProvider } from '../../context/TabContext';
 
 import Login from '../../pages/auth/Login';
 import Signup from '../../pages/auth/Signup';
 import EmailVerification from '../../pages/auth/EmailVerification';
-
-import Dashboard from '../../pages/Dashboard';
-import DatabaseExplorer from '../../pages/DatabaseExplorer';
-import QueryConsole from '../../pages/QueryConsole';
+import AppLayout from '../layout/AppLayout';
 import NotFound from '../../pages/NotFound';
-
-const DatabaseExplorerWrapper: React.FC = () => {
-  const { databaseId } = useParams<{ databaseId: string }>();
-  const { goToApp } = useAppNavigation();
-
-  const database = {
-    id: databaseId || '1',
-    name: 'Production MySQL',
-    type: 'mysql',
-    host: 'prod-mysql.example.com',
-    port: 3306,
-  };
-
-  return (
-    <DatabaseExplorer
-      database={database}
-      onBack={() => goToApp.dashboard(true)}
-    />
-  );
-};
-
-const QueryConsoleWrapper: React.FC = () => {
-  const { databaseId } = useParams<{ databaseId: string }>();
-  const { goToApp } = useAppNavigation();
-
-  const database = {
-    id: databaseId || '1',
-    name: 'Production MySQL',
-    type: 'mysql',
-    host: 'prod-mysql.example.com',
-    port: 3306,
-  };
-
-  return (
-    <QueryConsole
-      database={database}
-      onBack={() => goToApp.databaseExplorer(database.id, true)}
-    />
-  );
-};
 
 export const AppRouter: React.FC = () => {
   return (
@@ -89,25 +46,9 @@ export const AppRouter: React.FC = () => {
         path={ROUTES.DASHBOARD}
         element={
           <ProtectedRoute requireAuth={true} requireVerification={true}>
-            <Dashboard />
-          </ProtectedRoute>
-        }
-      />
-      
-      <Route
-        path={ROUTES.DATABASE_EXPLORER}
-        element={
-          <ProtectedRoute requireAuth={true} requireVerification={true}>
-            <DatabaseExplorerWrapper />
-          </ProtectedRoute>
-        }
-      />
-      
-      <Route
-        path={ROUTES.QUERY_CONSOLE}
-        element={
-          <ProtectedRoute requireAuth={true} requireVerification={true}>
-            <QueryConsoleWrapper />
+            <TabProvider>
+              <AppLayout />
+            </TabProvider>
           </ProtectedRoute>
         }
       />

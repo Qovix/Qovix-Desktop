@@ -11,6 +11,7 @@ import {
   Download,
   Copy,
   Database,
+  Terminal,
   CheckCircle,
   XCircle,
   AlertCircle,
@@ -230,26 +231,17 @@ const QueryConsole: React.FC<QueryConsoleProps> = ({
   };
 
   return (
-    <div className="h-screen w-full bg-white flex flex-col">
-      <header className="bg-white border-b border-gray-200 px-6 py-4">
+    <div className="h-full w-full bg-white flex flex-col">
+      {/* Query Console Header */}
+      <div className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <Button
-              variant="ghost"
-              onClick={onBack}
-              className="p-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            
-            <div className="flex items-center space-x-3">
-              <Database className="h-5 w-5 text-[#bc3a08]" />
-              <div>
-                <h1 className="font-semibold text-gray-900">Query Console</h1>
-                <p className="text-xs text-gray-500">
-                  {database.name} • {database.type} • {database.host}:{database.port}
-                </p>
-              </div>
+          <div className="flex items-center space-x-3">
+            <Terminal className="h-5 w-5 text-[#bc3a08]" />
+            <div>
+              <h1 className="font-semibold text-gray-900">Query Console</h1>
+              <p className="text-xs text-gray-500">
+                {database.name} • {database.type} • {database.host}:{database.port}
+              </p>
             </div>
           </div>
 
@@ -274,9 +266,9 @@ const QueryConsole: React.FC<QueryConsoleProps> = ({
             </Button>
           </div>
         </div>
-      </header>
+      </div>
 
-      <div className="flex-1 flex">
+      <div className="flex-1 flex overflow-hidden">
         {showHistory && (
           <div className="w-80 bg-gray-50 border-r border-gray-200 flex flex-col">
             <div className="p-4 border-b border-gray-200">

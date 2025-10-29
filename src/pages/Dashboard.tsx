@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useAppNavigation } from '../hooks/useAppNavigation';
+import { useTabContext } from '../context/TabContext';
 import { Plus, Database, Server, Activity, ChevronRight, Settings, LogOut } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import DatabaseConnectionModal, { DatabaseConnectionData } from '../components/database/DatabaseConnectionModal';
@@ -75,17 +75,30 @@ const getStatusIndicator = (status: string) => {
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
-  const { goToAuth, goToApp } = useAppNavigation();
+  const { openTab } = useTabContext();
   const [databases] = useState<DatabaseConnection[]>(mockDatabases);
   const [showNewConnectionModal, setShowNewConnectionModal] = useState(false);
 
   const handleLogout = () => {
     logout();
-    goToAuth.login(true);
+    // For now, we'll just reload the app to go back to login
+    window.location.reload();
   };
 
   const handleDatabaseClick = (database: DatabaseConnection) => {
-    goToApp.databaseExplorer(database.id);
+    openTab({
+      id: `db-${database.id}`,
+      type: 'database-explorer',
+      title: database.name,
+      data: {
+        id: database.id,
+        name: database.name,
+        type: database.type,
+        host: database.host,
+        port: database.port,
+        status: database.status
+      }
+    });
   };
 
   const handleNewConnection = () => {
@@ -98,55 +111,55 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-white flex flex-col">
-      <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <h1 
-                className="text-2xl font-bold tracking-wide" 
-                style={{ 
-                  color: '#bc3a08',
-                  fontFamily: 'Inter, system-ui, sans-serif',
-                  fontWeight: '700',
-                  letterSpacing: '0.05em'
-                }}
-              >
-                Qovix
-              </h1>
+    <div className="h-full w-full bg-white flex flex-col">
+      {/* Dashboard Header */}
+      <div className="bg-white border-b border-gray-200 px-6 py-4">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center space-x-4">
+            <h1 
+              className="text-2xl font-bold tracking-wide" 
+              style={{ 
+                color: '#bc3a08',
+                fontFamily: 'Inter, system-ui, sans-serif',
+                fontWeight: '700',
+                letterSpacing: '0.05em'
+              }}
+            >
+              Qovix
+            </h1>
+            <div className="text-sm text-gray-500">Database Management</div>
+          </div>
+          
+          <div className="flex items-center space-x-4">
+            <button className="p-2 text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100 transition-colors">
+              <Settings className="h-5 w-5" />
+            </button>
+            
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-[#bc3a08] rounded-full flex items-center justify-center">
+                <span className="text-white text-sm font-medium">
+                  {user?.first_name?.[0]?.toUpperCase()}
+                </span>
+              </div>
+              <div className="text-left">
+                <div className="text-sm font-medium text-gray-900">
+                  {user?.first_name} {user?.last_name}
+                </div>
+                <div className="text-xs text-gray-500">{user?.email}</div>
+              </div>
             </div>
             
-            <div className="flex items-center space-x-4">
-              <button className="p-2 text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100 transition-colors">
-                <Settings className="h-5 w-5" />
-              </button>
-              
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-[#bc3a08] rounded-full flex items-center justify-center">
-                  <span className="text-white text-sm font-medium">
-                    {user?.first_name?.[0]?.toUpperCase()}
-                  </span>
-                </div>
-                <div className="text-left">
-                  <div className="text-sm font-medium text-gray-900">
-                    {user?.first_name} {user?.last_name}
-                  </div>
-                  <div className="text-xs text-gray-500">{user?.email}</div>
-                </div>
-              </div>
-              
-              <button
-                onClick={handleLogout}
-                className="p-2 text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                <LogOut className="h-5 w-5" />
-              </button>
-            </div>
+            <button
+              onClick={handleLogout}
+              className="p-2 text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              <LogOut className="h-5 w-5" />
+            </button>
           </div>
         </div>
-      </header>
+      </div>
 
-      <main className="flex-1 p-6">
+      <main className="flex-1 p-6 overflow-y-auto">
         <div className="max-w-7xl mx-auto">
           <div className="mb-8">
             <div className="flex items-center justify-between">

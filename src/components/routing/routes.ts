@@ -8,8 +8,6 @@ export const ROUTES = {
   },
   
   DASHBOARD: '/dashboard',
-  DATABASE_EXPLORER: '/database/:databaseId',
-  QUERY_CONSOLE: '/database/:databaseId/console',
   PROFILE: '/profile',
   SETTINGS: '/settings',
   
@@ -53,20 +51,6 @@ export const ROUTE_CONFIG: Record<string, RouteConfig> = {
     requireVerification: true,
     title: 'Dashboard - Qovix',
     description: 'Your Qovix dashboard',
-  },
-  [ROUTES.DATABASE_EXPLORER]: {
-    path: ROUTES.DATABASE_EXPLORER,
-    requireAuth: true,
-    requireVerification: true,
-    title: 'Database Explorer - Qovix',
-    description: 'Explore your database',
-  },
-  [ROUTES.QUERY_CONSOLE]: {
-    path: ROUTES.QUERY_CONSOLE,
-    requireAuth: true,
-    requireVerification: true,
-    title: 'Query Console - Qovix',
-    description: 'Execute SQL queries',
   },
   [ROUTES.PROFILE]: {
     path: ROUTES.PROFILE,
