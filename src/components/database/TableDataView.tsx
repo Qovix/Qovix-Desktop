@@ -14,35 +14,8 @@ import {
   Copy
 } from 'lucide-react';
 import { Button, Input } from '../ui';
+import { SortConfig, TableDataViewProps, TableColumn } from 'src/utils/types';
 
-interface TableColumn {
-  name: string;
-  type: string;
-  nullable: boolean;
-  primaryKey?: boolean;
-  foreignKey?: boolean;
-}
-
-interface TableRow {
-  [key: string]: any;
-}
-
-interface TableDataViewProps {
-  tableName: string;
-  columns: TableColumn[];
-  data: TableRow[];
-  totalRows: number;
-  onRefresh: () => void;
-  onInsertRow: () => void;
-  onExportCSV: () => void;
-  onEditRow: (row: TableRow, index: number) => void;
-  onDeleteRow: (row: TableRow, index: number) => void;
-}
-
-interface SortConfig {
-  field: string;
-  direction: 'asc' | 'desc';
-}
 
 const TableDataView: React.FC<TableDataViewProps> = ({
   tableName,
@@ -130,7 +103,7 @@ const TableDataView: React.FC<TableDataViewProps> = ({
     if (selectedRows.size === paginatedData.length) {
       setSelectedRows(new Set());
     } else {
-      setSelectedRows(new Set(paginatedData.map((_, index) => index)));
+      setSelectedRows(new Set(paginatedData?.map((_, index) => index)));
     }
   };
 
@@ -249,7 +222,6 @@ const TableDataView: React.FC<TableDataViewProps> = ({
         </div>
       </div>
 
-      {/* Table Section - Scrollable */}
       <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, overflow: 'auto' }}>
           <div style={{ minWidth: 'fit-content' }}>
@@ -275,7 +247,7 @@ const TableDataView: React.FC<TableDataViewProps> = ({
                       style={{ borderRadius: 4 }}
                     />
                   </th>
-                  {columns.map((column) => (
+                  {columns?.map((column) => (
                     <th
                       key={column.name}
                       style={{
@@ -343,7 +315,7 @@ const TableDataView: React.FC<TableDataViewProps> = ({
                 </tr>
               </thead>
               <tbody>
-                {paginatedData.map((row, index) => (
+                {paginatedData?.map((row, index) => (
                   <tr 
                     key={index}
                     style={{
@@ -366,7 +338,7 @@ const TableDataView: React.FC<TableDataViewProps> = ({
                         style={{ borderRadius: 4 }}
                       />
                     </td>
-                    {columns.map((column) => (
+                    {columns?.map((column) => (
                       <td key={column.name} style={{ padding: 12, fontSize: 14, whiteSpace: 'nowrap' }}>
                         {formatCellValue(row[column.name], column)}
                       </td>
@@ -425,7 +397,6 @@ const TableDataView: React.FC<TableDataViewProps> = ({
         )}
       </div>
 
-      {/* Pagination - Fixed */}
       {totalPages > 1 && (
         <div style={{ flexShrink: 0, borderTop: '1px solid #e5e7eb', padding: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: 'white' }}>
           <div style={{ fontSize: 14, color: '#4b5563' }}>

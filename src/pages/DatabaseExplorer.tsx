@@ -1,156 +1,33 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Database, 
   Table, 
   Eye, 
   Terminal,
-  Brain,
-  Trash2,
   RefreshCw,
   ChevronRight,
   ChevronDown,
-  Server,
-  ArrowLeft,
-  Settings,
   Search,
   Folder,
-  FolderOpen
+  FolderOpen,
+  Loader2,
+  AlertCircle
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import TableDataView from '../components/database/TableDataView';
 import AIQueryAssistant from '../components/database/AIQueryAssistant';
 import { useTabContext } from '../context/TabContext';
+import { databaseService, DatabaseSchema as APISchema } from '../services/databaseService';
+import { DatabaseConnectionTest } from '../components/database/DatabaseConnectionTest';
+import { DatabaseExplorerProps, DatabaseSchema } from 'src/utils/types';
+import { ContextMenu } from '../components/database';
 
-interface DatabaseTable {
-  name: string;
-  type: 'table' | 'view';
-  rowCount?: number;
-}
-
-interface DatabaseSchema {
-  name: string;
-  tables: DatabaseTable[];
-  views: DatabaseTable[];
-  procedures?: string[];
-}
-
-interface ContextMenuProps {
-  x: number;
-  y: number;
-  target: {
-    type: 'database' | 'table' | 'view' | 'procedure';
-    name: string;
-  };
-  onClose: () => void;
-  onAction: (action: string, target: any) => void;
-}
-
-const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, target, onClose, onAction }) => {
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        onClose();
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [onClose]);
-
-  const menuItems = {
-    database: [
-      { icon: Terminal, label: 'Open Query Console', action: 'open-console' },
-      { icon: RefreshCw, label: 'Refresh', action: 'refresh' },
-      { icon: Settings, label: 'Connection Settings', action: 'settings' },
-      { icon: Server, label: 'Disconnect', action: 'disconnect' },
-    ],
-    table: [
-      { icon: Eye, label: 'View Data', action: 'view-data' },
-      { icon: Terminal, label: 'Open Query Console', action: 'open-console' },
-      { icon: Brain, label: 'Ask AI about Table', action: 'ask-ai' },
-      { icon: RefreshCw, label: 'Refresh', action: 'refresh' },
-      { icon: Trash2, label: 'Delete Table', action: 'delete', danger: true },
-    ],
-    view: [
-      { icon: Eye, label: 'View Data', action: 'view-data' },
-      { icon: Terminal, label: 'Open Query Console', action: 'open-console' },
-      { icon: RefreshCw, label: 'Refresh', action: 'refresh' },
-    ],
-    procedure: [
-      { icon: Terminal, label: 'Execute Procedure', action: 'execute' },
-      { icon: Eye, label: 'View Definition', action: 'view-definition' },
-    ]
-  } as const;
-
-  const items = menuItems[target.type] || [];
-
-  return (
-    <div
-      ref={menuRef}
-      className="fixed bg-white border border-gray-200 rounded-lg shadow-lg py-2 z-50 min-w-[200px]"
-      style={{ left: x, top: y }}
-    >
-      {items.map((item, index) => {
-        const Icon = item.icon;
-        const isDanger = 'danger' in item && item.danger;
-        return (
-          <button
-            key={index}
-            onClick={() => {
-              onAction(item.action, target);
-              onClose();
-            }}
-            className={`w-full flex items-center space-x-3 px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${
-              isDanger ? 'text-red-600 hover:bg-red-50' : 'text-gray-700'
-            }`}
-          >
-            <Icon className="h-4 w-4" />
-            <span>{item.label}</span>
-          </button>
-        );
-      })}
-    </div>
-  );
-};
-
-interface DatabaseExplorerProps {
-  database: {
-    id: string;
-    name: string;
-    type: string;
-    host: string;
-    port: number;
-  };
-  onBack: () => void;
-}
-
-export default function DatabaseExplorer({ database, onBack }: DatabaseExplorerProps) {
+export default function DatabaseExplorer({ database }: DatabaseExplorerProps) {
   const { openTab } = useTabContext();
-  const [schema, setSchema] = useState<DatabaseSchema>({
-    name: database.name,
-    tables: [
-      { name: 'users', type: 'table', rowCount: 1250 },
-      { name: 'orders', type: 'table', rowCount: 5800 },
-      { name: 'products', type: 'table', rowCount: 340 },
-      { name: 'categories', type: 'table', rowCount: 25 },
-      { name: 'order_items', type: 'table', rowCount: 12400 },
-      { name: 'payments', type: 'table', rowCount: 4200 },
-    ],
-    views: [
-      { name: 'user_orders_summary', type: 'view' },
-      { name: 'product_sales_stats', type: 'view' },
-    ],
-    procedures: ['calculate_monthly_revenue', 'update_inventory', 'process_refund']
-  });
-
-  const [expandedSections, setExpandedSections] = useState({
-    tables: true,
-    views: false,
-    procedures: false,
-  });
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedItem, setSelectedItem] = useState<string | null>(null);
+  const [isAIOpen, setIsAIOpen] = useState(false);
 
   const [contextMenu, setContextMenu] = useState<{
     x: number;
@@ -158,9 +35,55 @@ export default function DatabaseExplorer({ database, onBack }: DatabaseExplorerP
     target: any;
   } | null>(null);
 
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedItem, setSelectedItem] = useState<string | null>(null);
-  const [isAIOpen, setIsAIOpen] = useState(false);
+  const [schema, setSchema] = useState<DatabaseSchema>({
+    name: database.name,
+    tables: [],
+    views: [],
+    procedures: []
+  });
+  
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const [expandedSections, setExpandedSections] = useState({
+    tables: true,
+    views: false,
+    procedures: false,
+  });
+
+  useEffect(() => {
+    loadDatabaseSchema();
+  }, [database.id]);
+
+  const loadDatabaseSchema = async () => {
+    if (!database.id) return;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const apiSchema = await databaseService.getSchema(database.id);
+      console.log('Loaded database schema:', apiSchema);
+      const uiSchema: DatabaseSchema = {
+        name: apiSchema.name,
+        tables: apiSchema.tables.map(table => ({
+          name: table.name,
+          type: 'table' as const,
+          columns: table.columns,
+          rowCount: undefined 
+        })),
+        views: [], 
+        procedures: []
+      };
+
+      setSchema(uiSchema);
+    } catch (err) {
+      console.error('Failed to load database schema:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load database schema');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleRightClick = (event: React.MouseEvent, type: string, name: string) => {
     event.preventDefault();
@@ -180,38 +103,138 @@ export default function DatabaseExplorer({ database, onBack }: DatabaseExplorerP
   };
 
   const TableDataViewWrapper: React.FC<{ selectedTable: string }> = ({ selectedTable }) => {
-    const mockColumns = [
-      { name: 'id', type: 'int', nullable: false, primaryKey: true },
-      { name: 'name', type: 'varchar(255)', nullable: false },
-      { name: 'email', type: 'varchar(255)', nullable: false },
-      { name: 'created_at', type: 'timestamp', nullable: false },
-      { name: 'created_at', type: 'timestamp', nullable: false },
-      { name: 'created_at', type: 'timestamp', nullable: false },
-      { name: 'created_at', type: 'timestamp', nullable: false },
-      { name: 'created_at', type: 'timestamp', nullable: false },
-      { name: 'created_at', type: 'timestamp', nullable: false },
-    ];
+    const [tableData, setTableData] = useState<any[]>([]);
+    const [tableLoading, setTableLoading] = useState(false);
+    const [tableError, setTableError] = useState<string | null>(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalRows, setTotalRows] = useState(0);
+    const rowsPerPage = 50;
 
-    const mockData = Array.from({ length: 65 }, (_, i) => ({
-      id: i + 1,
-      name: `User ${i + 1}`,
-      email: `user${i + 1}@example.com`,
+    console.log('TableDataViewWrapper state:', { tableData, tableLoading, tableError, columns: tableData?.length });
 
-      des:'sfsdf',
-      ordreId:'ssdf',
-      vffd:"df",
-      df:'df',
-      dfgd:'dg',
-      created_at: new Date(Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 30).toISOString(),
-    }));
+    const tableSchema = schema.tables.find(table => table.name === selectedTable);
+    
+    console.log('Table schema for', selectedTable, ':', tableSchema);
+    
+    const columns = tableSchema?.columns?.map(col => ({
+      name: col.name,
+      type: col.type,
+      nullable: col.nullable,
+      primaryKey: col.is_primary_key,
+      foreignKey: false 
+    })) || [];
+
+    const loadTableData = async (page = 1) => {
+      if (!database.id || !selectedTable) return;
+
+      setTableLoading(true);
+      setTableError(null);
+
+      try {
+        const query = `SELECT TOP (${rowsPerPage}) * FROM [${selectedTable}]`;
+        
+        const result = await databaseService.executeQuery(database.id, query, rowsPerPage);
+        
+        console.log('Query result:', result);
+        
+        const formattedData = (result.rows || []).map(row => {
+          const rowObj: any = {};
+          (result.columns || []).forEach((colName, index) => {
+            rowObj[colName] = row?.[index];
+          });
+          return rowObj;
+        });
+
+        setTableData(formattedData);
+        
+        if (page === 1) {
+          try {
+            const countResult = await databaseService.executeQuery(database.id, `SELECT COUNT(*) as total FROM [${selectedTable}]`, 1);
+            setTotalRows(countResult.rows?.[0]?.[0] || 0);
+          } catch (countError) {
+            console.warn('Failed to get row count:', countError);
+            setTotalRows(formattedData.length);
+          }
+        }
+
+      } catch (err) {
+        console.error('Failed to load table data:', err);
+        setTableError(err instanceof Error ? err.message : 'Failed to load table data');
+        setTableData([]);
+        setTotalRows(0);
+      } finally {
+        setTableLoading(false);
+      }
+    };
+
+    useEffect(() => {
+      if (selectedTable && tableSchema) {
+        setCurrentPage(1);
+        loadTableData(1);
+      }
+    }, [selectedTable, database.id]);
+
+    const handleRefresh = () => {
+      loadTableData(currentPage);
+    };
+
+    const handlePageChange = (newPage: number) => {
+      setCurrentPage(newPage);
+      loadTableData(newPage);
+    };
+
+    if (!tableSchema) {
+      return (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <AlertCircle className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              Table Schema Not Found
+            </h3>
+            <p className="text-gray-600">
+              Unable to find schema information for table: {selectedTable}
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    if (tableError) {
+      return (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <AlertCircle className="h-16 w-16 text-red-300 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              Error Loading Table Data
+            </h3>
+            <p className="text-red-600 mb-4">{tableError}</p>
+            <Button onClick={handleRefresh} variant="outline">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Try Again
+            </Button>
+          </div>
+        </div>
+      );
+    }
+
+    if (tableLoading) {
+      return (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="flex items-center space-x-2">
+            <Loader2 className="h-6 w-6 animate-spin text-[#bc3a08]" />
+            <span className="text-lg text-gray-600">Loading table data...</span>
+          </div>
+        </div>
+      );
+    }
 
     return (
       <TableDataView
         tableName={selectedTable}
-        columns={mockColumns}
-        data={mockData}
-        totalRows={1250}
-        onRefresh={() => console.log('Refresh table')}
+        columns={columns || []}
+        data={tableData || []}
+        totalRows={totalRows}
+        onRefresh={handleRefresh}
         onInsertRow={() => console.log('Insert row')}
         onExportCSV={() => console.log('Export CSV')}
         onEditRow={(row, index) => console.log('Edit row', row, index)}
@@ -241,7 +264,6 @@ export default function DatabaseExplorer({ database, onBack }: DatabaseExplorerP
 
   return (
     <div className="h-full w-full bg-white flex flex-col">
-      {/* Database Explorer Header */}
       <div className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
@@ -258,9 +280,15 @@ export default function DatabaseExplorer({ database, onBack }: DatabaseExplorerP
             <Button
               variant="outline"
               size="sm"
+              onClick={loadDatabaseSchema}
+              disabled={loading}
               className="text-gray-600 hover:text-gray-900"
             >
-              <RefreshCw className="h-4 w-4 mr-2" />
+              {loading ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <RefreshCw className="h-4 w-4 mr-2" />
+              )}
               Refresh
             </Button>
             
@@ -299,13 +327,35 @@ export default function DatabaseExplorer({ database, onBack }: DatabaseExplorerP
           </div>
 
           <div className="flex-1 overflow-y-auto p-4 space-y-2">
-            <div
-              className="flex items-center space-x-2 p-2 rounded hover:bg-gray-100 cursor-pointer"
-              onContextMenu={(e) => handleRightClick(e, 'database', database.name)}
-            >
-              <Database className="h-4 w-4 text-[#bc3a08]" />
-              <span className="font-medium text-gray-900">{database.name}</span>
-            </div>
+            {loading && (
+              <div className="flex items-center justify-center py-8">
+                <div className="flex items-center space-x-2">
+                  <Loader2 className="h-4 w-4 animate-spin text-[#bc3a08]" />
+                  <span className="text-sm text-gray-600">Loading schema...</span>
+                </div>
+              </div>
+            )}
+
+            {error && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                <div className="flex items-center space-x-2">
+                  <AlertCircle className="h-4 w-4 text-red-500" />
+                  <span className="text-sm text-red-700">{error}</span>
+                </div>
+              </div>
+            )}
+
+            {!loading && !error && 
+              <div className="space-y-2">
+                <div
+                  className="flex items-center space-x-2 p-2 rounded hover:bg-gray-100 cursor-pointer"
+                  onContextMenu={(e) => handleRightClick(e, 'database', database.name)}
+                >
+                  <Database className="h-4 w-4 text-[#bc3a08]" />
+                  <span className="font-medium text-gray-900">{database.name}</span>
+                </div>
+                </div>
+              }
 
             <div>
               <button
@@ -319,13 +369,13 @@ export default function DatabaseExplorer({ database, onBack }: DatabaseExplorerP
                 )}
                 <Folder className="h-4 w-4 text-blue-600" />
                 <span className="text-sm font-medium text-gray-700">
-                  Tables ({filteredTables.length})
+                  Tables ({filteredTables?.length})
                 </span>
               </button>
 
               {expandedSections.tables && (
                 <div className="ml-6 space-y-1">
-                  {filteredTables.map((table) => (
+                  {filteredTables?.map((table) => (
                     <div
                       key={table.name}
                       className={`flex items-center justify-between p-2 rounded hover:bg-gray-100 cursor-pointer ${
@@ -361,13 +411,13 @@ export default function DatabaseExplorer({ database, onBack }: DatabaseExplorerP
                 )}
                 <FolderOpen className="h-4 w-4 text-purple-600" />
                 <span className="text-sm font-medium text-gray-700">
-                  Views ({filteredViews.length})
+                  Views ({filteredViews?.length})
                 </span>
               </button>
 
               {expandedSections.views && (
                 <div className="ml-6 space-y-1">
-                  {filteredViews.map((view) => (
+                  {filteredViews?.map((view) => (
                     <div
                       key={view.name}
                       className={`flex items-center space-x-2 p-2 rounded hover:bg-gray-100 cursor-pointer ${
@@ -397,13 +447,13 @@ export default function DatabaseExplorer({ database, onBack }: DatabaseExplorerP
                   )}
                   <Folder className="h-4 w-4 text-orange-600" />
                   <span className="text-sm font-medium text-gray-700">
-                    Procedures ({filteredProcedures.length})
+                    Procedures ({filteredProcedures?.length})
                   </span>
                 </button>
 
                 {expandedSections.procedures && (
                   <div className="ml-6 space-y-1">
-                    {filteredProcedures.map((procedure) => (
+                    {filteredProcedures?.map((procedure) => (
                       <div
                         key={procedure}
                         className={`flex items-center space-x-2 p-2 rounded hover:bg-gray-100 cursor-pointer ${
@@ -428,7 +478,7 @@ export default function DatabaseExplorer({ database, onBack }: DatabaseExplorerP
             {selectedItem ? (
               <TableDataViewWrapper selectedTable={selectedItem} />
             ) : (
-              <div className="flex-1 flex items-center justify-center">
+              <div className="flex-1 flex items-center justify-center flex-col space-y-4">
                 <div className="text-center">
                   <Database className="h-16 w-16 text-gray-300 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -438,6 +488,10 @@ export default function DatabaseExplorer({ database, onBack }: DatabaseExplorerP
                     Choose an item from the sidebar to view its data
                   </p>
                 </div>
+                
+                {database.id && (
+                  <DatabaseConnectionTest connectionId={database.id} />
+                )}
               </div>
             )}
           </div>

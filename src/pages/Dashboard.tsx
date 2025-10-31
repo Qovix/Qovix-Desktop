@@ -81,7 +81,6 @@ export default function Dashboard() {
 
   const handleLogout = () => {
     logout();
-    // For now, we'll just reload the app to go back to login
     window.location.reload();
   };
 
@@ -106,13 +105,30 @@ export default function Dashboard() {
   };
 
   const handleConnectionCreated = (connectionData: DatabaseConnectionData) => {
-    // TODO: Add the new connection to the list and navigate to explorer
-    console.log('New connection created:', connectionData);
+    if (connectionData.connectionId) {
+      openTab({
+        id: connectionData.connectionId,
+        type: 'database-explorer',
+        title: connectionData.name,
+        data: {
+          id: connectionData.connectionId,
+          name: connectionData.name,
+          type: connectionData.type,
+          host: connectionData.host,
+          port: connectionData.port,
+          database: connectionData.database,
+          status: 'connected',
+          version: connectionData.version,
+          schemas: connectionData.schemas,
+        }
+      });
+    }
+    
+    setShowNewConnectionModal(false);
   };
 
   return (
     <div className="h-full w-full bg-white flex flex-col">
-      {/* Dashboard Header */}
       <div className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex justify-between items-center">
           <div className="flex items-center space-x-4">

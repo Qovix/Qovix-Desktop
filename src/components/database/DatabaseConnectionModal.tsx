@@ -3,6 +3,7 @@ import { X, Database, Check, AlertCircle } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
+import { databaseService } from '../../services/databaseService';
 
 interface DatabaseConnectionModalProps {
   isOpen: boolean;
@@ -19,21 +20,24 @@ export interface DatabaseConnectionData {
   username: string;
   password: string;
   saveConnection: boolean;
+  connectionId?: string;
+  version?: string;
+  schemas?: string[];
 }
 
 const databaseTypes = [
-  { value: 'mysql', label: 'MySQL', port: '3306', icon: '🐬' },
-  { value: 'postgresql', label: 'PostgreSQL', port: '5432', icon: '🐘' },
-  { value: 'mongodb', label: 'MongoDB', port: '27017', icon: '🍃' },
-  { value: 'sqlserver', label: 'SQL Server', port: '1433', icon: '🏢' },
+  { value: 'sqlserver', label: 'SQL Server', port: '1433', icon: '🏢', available: true },
+  { value: 'mysql', label: 'MySQL - Coming Soon', port: '3306', icon: '�', available: false },
+  { value: 'postgresql', label: 'PostgreSQL - Coming Soon', port: '5432', icon: '🐘', available: false },
+  { value: 'mongodb', label: 'MongoDB - Coming Soon', port: '27017', icon: '�', available: false },
 ];
 
 export default function DatabaseConnectionModal({ isOpen, onClose, onConnect }: DatabaseConnectionModalProps) {
   const [formData, setFormData] = useState<DatabaseConnectionData>({
     name: '',
-    type: 'mysql',
+    type: 'sqlserver',
     host: 'localhost',
-    port: '3306',
+    port: '1433',
     database: '',
     username: '',
     password: '',
@@ -90,28 +94,31 @@ export default function DatabaseConnectionModal({ isOpen, onClose, onConnect }: 
     setError('');
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      const success = Math.random() > 0.3;
-      
-      if (success) {
+      const token = localStorage.getItem('qovix_token');
+      if (!token) {
+        throw new Error('Authentication required. Please log in again.');
+      }
+
+      const result = await databaseService.testConnection(formData);
+
+      if (result.status === 'connected') {
         setStep('success');
         setTimeout(() => {
-          onConnect(formData);
-          onClose();
-          setFormData({
-            name: '',
-            type: 'mysql',
-            host: 'localhost',
-            port: '3306',
-            database: '',
-            username: '',
-            password: '',
-            saveConnection: true,
-          });
+          if (formData.saveConnection) {
+            createConnection();
+          } else {
+            onConnect({
+              ...formData,
+              connectionId: `temp_${Date.now()}`,
+              version: result.version,
+              schemas: result.schemas,
+            });
+            onClose();
+            resetForm();
+          }
         }, 1500);
       } else {
-        throw new Error('Connection failed: Unable to connect to database. Please check your credentials and try again.');
+        throw new Error(result.message || 'Connection failed');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Connection failed');
@@ -119,6 +126,37 @@ export default function DatabaseConnectionModal({ isOpen, onClose, onConnect }: 
     } finally {
       setIsConnecting(false);
     }
+  };
+
+  const createConnection = async () => {
+    try {
+      const result = await databaseService.createConnection(formData);
+
+      onConnect({
+        ...formData,
+        connectionId: result.id,
+        version: result.version,
+        schemas: result.schemas,
+      });
+      onClose();
+      resetForm();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create connection');
+      setStep('form');
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      type: 'sqlserver',
+      host: 'localhost',
+      port: '1433',
+      database: '',
+      username: '',
+      password: '',
+      saveConnection: true,
+    });
   };
 
   if (!isOpen) return null;
@@ -169,16 +207,25 @@ export default function DatabaseConnectionModal({ isOpen, onClose, onConnect }: 
                     <button
                       key={db.value}
                       type="button"
-                      onClick={() => handleTypeChange(db.value)}
+                      onClick={() => db.available && handleTypeChange(db.value)}
+                      disabled={!db.available}
                       className={`p-3 rounded-lg border text-left transition-all ${
                         formData.type === db.value
                           ? 'border-[#bc3a08] bg-[#bc3a08]/5'
-                          : 'border-gray-200 hover:border-gray-300'
+                          : db.available
+                          ? 'border-gray-200 hover:border-gray-300'
+                          : 'border-gray-100 bg-gray-50 cursor-not-allowed'
                       }`}
                     >
                       <div className="flex items-center space-x-2">
-                        <span className="text-lg">{db.icon}</span>
-                        <span className="font-medium text-sm">{db.label}</span>
+                        <span className={`text-lg ${!db.available ? 'grayscale opacity-50' : ''}`}>
+                          {db.icon}
+                        </span>
+                        <span className={`font-medium text-sm ${
+                          !db.available ? 'text-gray-400' : ''
+                        }`}>
+                          {db.label}
+                        </span>
                       </div>
                     </button>
                   ))}
