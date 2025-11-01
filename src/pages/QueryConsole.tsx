@@ -48,6 +48,7 @@ interface QueryTab {
 
 interface QueryConsoleProps {
   database: {
+    id: string;
     name: string;
     type: string;
     host: string;

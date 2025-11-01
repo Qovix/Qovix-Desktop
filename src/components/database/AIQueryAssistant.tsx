@@ -12,22 +12,22 @@ import {
   Loader2,
   Sparkles,
   Code,
-  MessageSquare
+  MessageSquare,
+  AlertCircle,
+  CheckCircle,
+  XCircle,
+  History,
+  RefreshCw
 } from 'lucide-react';
 import { Button } from '../ui/button';
-
-interface AIMessage {
-  id: string;
-  type: 'user' | 'assistant';
-  content: string;
-  query?: string;
-  timestamp: Date;
-}
+import { useAIAssistant } from '../../hooks/useAIAssistant';
+import { AIMessage } from '../../utils/types';
 
 interface AIQueryAssistantProps {
   isOpen: boolean;
   onToggle: () => void;
   database: {
+    id: string;
     name: string;
     type: string;
   };
@@ -44,17 +44,19 @@ const AIQueryAssistant: React.FC<AIQueryAssistantProps> = ({
   onRunQuery,
   className = ''
 }) => {
-  const [messages, setMessages] = useState<AIMessage[]>([
-    {
-      id: '1',
-      type: 'assistant',
-      content: `Hello! I'm your AI database assistant. I can help you with queries for the **${database.name}** database.${selectedTable ? ` Currently viewing the **${selectedTable}** table.` : ''}\n\nTry asking me things like:\n• "Show me all users"\n• "Count orders by status"\n• "Find products with low inventory"`,
-      timestamp: new Date()
-    }
-  ]);
-  
+  const {
+    messages,
+    isLoading,
+    serviceStatus,
+    generateSQL,
+    explainSQL,
+    canSendMessage,
+    cancelCurrentRequest,
+    clearMessages
+  } = useAIAssistant(database.id, database.name);
+
   const [inputValue, setInputValue] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -72,94 +74,18 @@ const AIQueryAssistant: React.FC<AIQueryAssistantProps> = ({
     }
   }, [isOpen]);
 
-  const generateAIResponse = async (userMessage: string): Promise<{ content: string; query?: string }> => {
-    await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
-    
-    const lowerMessage = userMessage.toLowerCase();
-    
-    if (lowerMessage.includes('show') || lowerMessage.includes('select') || lowerMessage.includes('get')) {
-      const tableName = selectedTable || 'users';
-      return {
-        content: `Here's a query to show data from the **${tableName}** table:`,
-        query: `SELECT * FROM ${tableName} LIMIT 100;`
-      };
-    }
-    
-    if (lowerMessage.includes('count')) {
-      const tableName = selectedTable || 'orders';
-      return {
-        content: `Here's a query to count records in the **${tableName}** table:`,
-        query: `SELECT COUNT(*) as total_count FROM ${tableName};`
-      };
-    }
-    
-    if (lowerMessage.includes('summarize') || lowerMessage.includes('summary')) {
-      const tableName = selectedTable || 'products';
-      return {
-        content: `Here's a summary query for the **${tableName}** table:`,
-        query: `SELECT 
-  COUNT(*) as total_rows,
-  COUNT(DISTINCT id) as unique_ids,
-  MIN(created_at) as oldest_record,
-  MAX(created_at) as newest_record
-FROM ${tableName};`
-      };
-    }
-    
-    if (lowerMessage.includes('join') || lowerMessage.includes('relationship')) {
-      return {
-        content: `Here's a query showing relationships between tables:`,
-        query: `SELECT u.name, COUNT(o.id) as order_count
-FROM users u
-LEFT JOIN orders o ON u.id = o.user_id
-GROUP BY u.id, u.name
-ORDER BY order_count DESC
-LIMIT 10;`
-      };
-    }
-    
-    return {
-      content: `I understand you're asking about "${userMessage}". Here's a general query that might help:`,
-      query: selectedTable ? `SELECT * FROM ${selectedTable} LIMIT 10;` : `SHOW TABLES;`
-    };
-  };
-
   const handleSendMessage = async () => {
-    if (!inputValue.trim() || isLoading) return;
+    if (!inputValue.trim() || !canSendMessage) return;
 
-    const userMessage: AIMessage = {
-      id: Date.now().toString(),
-      type: 'user',
-      content: inputValue.trim(),
-      timestamp: new Date()
-    };
-
-    setMessages(prev => [...prev, userMessage]);
+    const userQuery = inputValue.trim();
     setInputValue('');
-    setIsLoading(true);
 
     try {
-      const response = await generateAIResponse(userMessage.content);
+      const tables = selectedTable ? [selectedTable] : undefined;
       
-      const assistantMessage: AIMessage = {
-        id: (Date.now() + 1).toString(),
-        type: 'assistant',
-        content: response.content,
-        query: response.query,
-        timestamp: new Date()
-      };
-
-      setMessages(prev => [...prev, assistantMessage]);
+      await generateSQL(userQuery, tables);
     } catch (error) {
-      const errorMessage: AIMessage = {
-        id: (Date.now() + 1).toString(),
-        type: 'assistant',
-        content: 'Sorry, I encountered an error while processing your request. Please try again.',
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, errorMessage]);
-    } finally {
-      setIsLoading(false);
+      console.error('Failed to generate SQL:', error);
     }
   };
 
@@ -170,8 +96,24 @@ LIMIT 10;`
     }
   };
 
-  const copyQuery = (query: string) => {
-    navigator.clipboard.writeText(query);
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch (error) {
+      console.error('Failed to copy to clipboard:', error);
+    }
+  };
+
+  const handleRunQuery = (sqlQuery: string) => {
+    onRunQuery(sqlQuery);
+  };
+
+  const handleExplainQuery = async (sqlQuery: string) => {
+    try {
+      await explainSQL(sqlQuery);
+    } catch (error) {
+      console.error('Failed to explain query:', error);
+    }
   };
 
   const formatMessage = (content: string) => {
@@ -179,6 +121,22 @@ LIMIT 10;`
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.*?)\*/g, '<em>$1</em>')
       .replace(/\n/g, '<br />');
+  };
+
+  const getValidationIcon = (message: AIMessage) => {
+    if (message.is_valid === true) {
+      return <CheckCircle className="h-4 w-4 text-green-500" />;
+    } else if (message.is_valid === false) {
+      return <XCircle className="h-4 w-4 text-red-500" />;
+    }
+    return null;
+  };
+
+  const getConfidenceColor = (confidence?: number) => {
+    if (!confidence) return 'text-gray-400';
+    if (confidence >= 0.8) return 'text-green-600';
+    if (confidence >= 0.6) return 'text-yellow-600';
+    return 'text-red-600';
   };
 
   if (!isOpen) {
@@ -199,14 +157,24 @@ LIMIT 10;`
 
   return (
     <div className={`bg-white border-l border-gray-200 flex flex-col ${className}`}>
-      <div className="p-4 border-b border-gray-200">
+            <div className="p-4 border-b border-gray-200">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <Brain className="h-5 w-5 text-[#bc3a08]" />
             <div>
-              <h3 className="font-semibold text-gray-900">AI Assistant</h3>
+              <div className="flex items-center space-x-2">
+                <h3 className="font-medium text-gray-900">AI Assistant</h3>
+                {serviceStatus.isConnected ? (
+                  <div className="w-2 h-2 bg-green-500 rounded-full" title="Connected" />
+                ) : (
+                  <div className="w-2 h-2 bg-red-500 rounded-full" title="Disconnected" />
+                )}
+              </div>
               <p className="text-xs text-gray-500">
-                {database.name} • {selectedTable || 'No table selected'}
+                {serviceStatus.isConnected 
+                  ? 'Generate SQL from natural language'
+                  : 'Service unavailable'
+                }
               </p>
             </div>
           </div>
@@ -245,13 +213,34 @@ LIMIT 10;`
               className={`max-w-[85%] rounded-lg p-3 ${
                 message.type === 'user'
                   ? 'bg-[#bc3a08] text-white'
+                  : message.type === 'error'
+                  ? 'bg-red-50 text-red-900 border border-red-200'
                   : 'bg-gray-100 text-gray-900'
               }`}
             >
-              {message.type === 'assistant' && (
-                <div className="flex items-center space-x-2 mb-2">
-                  <Sparkles className="h-4 w-4 text-[#bc3a08]" />
-                  <span className="text-xs font-medium text-[#bc3a08]">AI Assistant</span>
+              {(message.type === 'assistant' || message.type === 'error') && (
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center space-x-2">
+                    {message.type === 'error' ? (
+                      <AlertCircle className="h-4 w-4 text-red-500" />
+                    ) : (
+                      <Sparkles className="h-4 w-4 text-[#bc3a08]" />
+                    )}
+                    <span className="text-xs font-medium text-[#bc3a08]">
+                      {message.type === 'error' ? 'Error' : 'AI Assistant'}
+                    </span>
+                  </div>
+                  
+                  {message.type === 'assistant' && (
+                    <div className="flex items-center space-x-2">
+                      {getValidationIcon(message)}
+                      {message.confidence && (
+                        <span className={`text-xs font-medium ${getConfidenceColor(message.confidence)}`}>
+                          {Math.round(message.confidence * 100)}%
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
               
@@ -260,31 +249,59 @@ LIMIT 10;`
                 dangerouslySetInnerHTML={{ __html: formatMessage(message.content) }}
               />
               
-              {message.query && (
+              {message.sql_query && (
                 <div className="mt-3 p-3 bg-gray-800 rounded text-green-400 font-mono text-xs">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center space-x-2">
                       <Code className="h-3 w-3" />
-                      <span className="text-gray-300">SQL Query</span>
+                      <span className="text-gray-300">Generated SQL</span>
+                      {message.is_valid === false && (
+                        <span className="text-red-400 text-xs">⚠ Validation Issues</span>
+                      )}
                     </div>
                     <div className="flex items-center space-x-1">
                       <button
-                        onClick={() => copyQuery(message.query!)}
+                        onClick={() => copyToClipboard(message.sql_query!)}
                         className="p-1 hover:bg-gray-700 rounded text-gray-400 hover:text-white"
                         title="Copy query"
                       >
                         <Copy className="h-3 w-3" />
                       </button>
+                      {message.is_valid !== false && (
+                        <button
+                          onClick={() => handleRunQuery(message.sql_query!)}
+                          className="p-1 hover:bg-gray-700 rounded text-gray-400 hover:text-green-400"
+                          title="Run query"
+                        >
+                          <Play className="h-3 w-3" />
+                        </button>
+                      )}
                       <button
-                        onClick={() => onRunQuery(message.query!)}
-                        className="p-1 hover:bg-gray-700 rounded text-gray-400 hover:text-green-400"
-                        title="Run query"
+                        onClick={() => handleExplainQuery(message.sql_query!)}
+                        className="p-1 hover:bg-gray-700 rounded text-gray-400 hover:text-blue-400"
+                        title="Explain query"
                       >
-                        <Play className="h-3 w-3" />
+                        <MessageSquare className="h-3 w-3" />
                       </button>
                     </div>
                   </div>
-                  <pre className="whitespace-pre-wrap">{message.query}</pre>
+                  <pre className="whitespace-pre-wrap">{message.sql_query}</pre>
+                  
+                  {message.validation_errors && message.validation_errors.length > 0 && (
+                    <div className="mt-2 p-2 bg-red-900 bg-opacity-50 rounded text-red-300 text-xs">
+                      <div className="font-medium mb-1">Validation Issues:</div>
+                      {message.validation_errors.map((error, index) => (
+                        <div key={index}>• {error}</div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              {message.isLoading && (
+                <div className="flex items-center space-x-2 mt-2">
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  <span className="text-xs opacity-70">Processing...</span>
                 </div>
               )}
               
@@ -310,6 +327,18 @@ LIMIT 10;`
       </div>
 
       <div className="p-4 border-t border-gray-200">
+        {!serviceStatus.isConnected && (
+          <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded-lg">
+            <div className="flex items-center space-x-2 text-red-700 text-sm">
+              <AlertCircle className="h-4 w-4" />
+              <span>AI service unavailable</span>
+              {serviceStatus.lastError && (
+                <span className="text-xs text-red-600">({serviceStatus.lastError})</span>
+              )}
+            </div>
+          </div>
+        )}
+
         <div className="flex space-x-2">
           <div className="flex-1 relative">
             <textarea
@@ -317,28 +346,94 @@ LIMIT 10;`
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder={`Ask about ${selectedTable || 'your database'}...`}
-              className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-[#bc3a08] focus:border-transparent"
+              placeholder={
+                selectedTable 
+                  ? `Ask about the ${selectedTable} table...`
+                  : `Ask about your ${database.name} database...`
+              }
+              className={`w-full p-3 border rounded-lg resize-none focus:ring-2 focus:ring-[#bc3a08] focus:border-transparent ${
+                !canSendMessage ? 'bg-gray-50 border-gray-200' : 'border-gray-300'
+              }`}
               rows={2}
-              disabled={isLoading}
+              disabled={!canSendMessage}
             />
           </div>
-          <Button
-            onClick={handleSendMessage}
-            disabled={!inputValue.trim() || isLoading}
-            className="bg-[#bc3a08] hover:bg-[#a0340a] text-white self-end"
-          >
-            {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Send className="h-4 w-4" />
+          
+          <div className="flex flex-col space-y-1">
+            <Button
+              onClick={handleSendMessage}
+              disabled={!inputValue.trim() || !canSendMessage}
+              className="bg-[#bc3a08] hover:bg-[#a0340a] text-white"
+              size="sm"
+            >
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
+            </Button>
+            
+            {isLoading && (
+              <Button
+                onClick={cancelCurrentRequest}
+                variant="outline"
+                size="sm"
+                className="text-red-600 hover:text-red-700"
+              >
+                <X className="h-4 w-4" />
+              </Button>
             )}
-          </Button>
+          </div>
         </div>
         
-        <div className="mt-2 text-xs text-gray-500">
-          Press Enter to send, Shift+Enter for new line
+        <div className="mt-3 flex items-center justify-between">
+          <div className="text-xs text-gray-500">
+            Press Enter to send, Shift+Enter for new line
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            <Button
+              onClick={() => setShowHistory(!showHistory)}
+              variant="ghost"
+              size="sm"
+              className="text-gray-500 hover:text-gray-700"
+            >
+              <History className="h-4 w-4" />
+            </Button>
+            
+            <Button
+              onClick={clearMessages}
+              variant="ghost"
+              size="sm"
+              className="text-gray-500 hover:text-gray-700"
+              title="Clear conversation"
+            >
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
+
+        {selectedTable && !isLoading && (
+          <div className="mt-3 pt-3 border-t border-gray-100">
+            <div className="text-xs text-gray-500 mb-2">Quick actions for {selectedTable}:</div>
+            <div className="flex flex-wrap gap-2">
+              {[
+                'Show all records',
+                'Count total rows',
+                'Describe table structure',
+                'Show recent records'
+              ].map((suggestion) => (
+                <button
+                  key={suggestion}
+                  onClick={() => setInputValue(suggestion)}
+                  className="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-700 transition-colors"
+                >
+                  {suggestion}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

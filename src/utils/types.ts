@@ -62,3 +62,36 @@ export interface DatabaseExplorerProps {
   };
   onBack: () => void;
 }
+
+// AI Assistant Types
+export interface AIMessage {
+  id: string;
+  type: 'user' | 'assistant' | 'system' | 'error';
+  content: string;
+  sql_query?: string;
+  explanation?: string;
+  confidence?: number;
+  is_valid?: boolean;
+  validation_errors?: string[];
+  timestamp: Date;
+  isLoading?: boolean;
+}
+
+export interface AIQueryAssistantProps {
+  isOpen: boolean;
+  onToggle: () => void;
+  database: {
+    id: string;
+    name: string;
+    type: string;
+  };
+  selectedTable?: string;
+  onRunQuery: (query: string) => void;
+  className?: string;
+}
+
+export interface AIServiceStatus {
+  isConnected: boolean;
+  lastError?: string;
+  isLoading: boolean;
+}

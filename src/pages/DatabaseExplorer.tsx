@@ -99,7 +99,16 @@ export default function DatabaseExplorer({ database }: DatabaseExplorerProps) {
   };
 
   const handleRunQuery = (query: string) => {
-    console.log('Running query:', query);
+    // Open query console with the generated query
+    openTab({
+      id: `query-${database.id}-${Date.now()}`,
+      type: 'query-console',
+      title: `Query - ${database.name}`,
+      data: {
+        database: database,
+        initialQuery: query
+      }
+    });
   };
 
   const TableDataViewWrapper: React.FC<{ selectedTable: string }> = ({ selectedTable }) => {
@@ -499,7 +508,11 @@ export default function DatabaseExplorer({ database }: DatabaseExplorerProps) {
           <AIQueryAssistant
             isOpen={isAIOpen}
             onToggle={() => setIsAIOpen(!isAIOpen)}
-            database={database}
+            database={{
+              id: database.id,
+              name: database.name,
+              type: database.type
+            }}
             selectedTable={selectedItem || undefined}
             onRunQuery={handleRunQuery}
             className={isAIOpen ? 'w-96' : 'fixed right-4 top-1/2 transform -translate-y-1/2 z-10'}
