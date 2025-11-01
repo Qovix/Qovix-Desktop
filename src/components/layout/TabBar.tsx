@@ -34,17 +34,14 @@ const TabBar: React.FC = () => {
           }`}
           onClick={() => setActiveTab(tab.id)}
         >
-          {/* Tab Icon */}
           <div className="flex-shrink-0">
             {getTabIcon(tab.type, tab.icon)}
           </div>
 
-          {/* Tab Title */}
           <span className="text-sm font-medium truncate min-w-0">
             {truncateTitle(tab.title)}
           </span>
 
-          {/* Close Button - only show for non-dashboard tabs */}
           {tab.id !== 'dashboard' && (
             <button
               onClick={(e) => {
@@ -59,7 +56,6 @@ const TabBar: React.FC = () => {
             </button>
           )}
 
-          {/* Connection Status Indicator for Database Tabs */}
           {tab.type === 'database-explorer' && tab.data?.status && (
             <div className="flex-shrink-0">
               <div className={`h-2 w-2 rounded-full ${
@@ -71,10 +67,8 @@ const TabBar: React.FC = () => {
         </div>
       ))}
 
-      {/* Tab Bar Gradient Fade for Overflow */}
       <div className="flex-1 bg-gray-50 border-r border-gray-200" />
       
-      {/* New Tab Button */}
       <div className="flex-shrink-0 px-2">
         <button
           className="p-2 hover:bg-gray-100 rounded-md text-gray-500 hover:text-gray-700 transition-colors"
