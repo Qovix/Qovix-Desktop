@@ -5,6 +5,8 @@ import {
   X, 
   ChevronLeft, 
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   Play,
   Copy,
   Database,
@@ -57,6 +59,7 @@ const AIQueryAssistant: React.FC<AIQueryAssistantProps> = ({
 
   const [inputValue, setInputValue] = useState('');
   const [showHistory, setShowHistory] = useState(false);
+  const [showQuickActions, setShowQuickActions] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -312,17 +315,6 @@ const AIQueryAssistant: React.FC<AIQueryAssistantProps> = ({
           </div>
         ))}
 
-        {isLoading && (
-          <div className="flex justify-start">
-            <div className="bg-gray-100 rounded-lg p-3">
-              <div className="flex items-center space-x-2">
-                <Loader2 className="h-4 w-4 animate-spin text-[#bc3a08]" />
-                <span className="text-sm text-gray-600">AI is thinking...</span>
-              </div>
-            </div>
-          </div>
-        )}
-
         <div ref={messagesEndRef} />
       </div>
 
@@ -415,23 +407,39 @@ const AIQueryAssistant: React.FC<AIQueryAssistantProps> = ({
 
         {selectedTable && !isLoading && (
           <div className="mt-3 pt-3 border-t border-gray-100">
-            <div className="text-xs text-gray-500 mb-2">Quick actions for {selectedTable}:</div>
-            <div className="flex flex-wrap gap-2">
-              {[
-                'Show all records',
-                'Count total rows',
-                'Describe table structure',
-                'Show recent records'
-              ].map((suggestion) => (
-                <button
-                  key={suggestion}
-                  onClick={() => setInputValue(suggestion)}
-                  className="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-700 transition-colors"
-                >
-                  {suggestion}
-                </button>
-              ))}
-            </div>
+            <button
+              onClick={() => setShowQuickActions(!showQuickActions)}
+              className="flex items-center justify-between w-full text-xs text-gray-500 hover:text-gray-700 transition-colors"
+            >
+              <span>Quick actions for {selectedTable}</span>
+              {showQuickActions ? (
+                <ChevronUp className="h-3 w-3" />
+              ) : (
+                <ChevronDown className="h-3 w-3" />
+              )}
+            </button>
+            
+            {showQuickActions && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {[
+                  'Show all records',
+                  'Count total rows',
+                  'Describe table structure',
+                  'Show recent records'
+                ].map((suggestion) => (
+                  <button
+                    key={suggestion}
+                    onClick={() => {
+                      setInputValue(suggestion);
+                      setShowQuickActions(false);
+                    }}
+                    className="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-700 transition-colors"
+                  >
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
