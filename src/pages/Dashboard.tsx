@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTabContext } from '../context/TabContext';
-import { Plus, Database, Server, Activity, ChevronRight, Settings, LogOut } from 'lucide-react';
+import { Plus, Database, Server, Activity, ChevronRight, Settings, LogOut, RefreshCw, AlertCircle, Trash2, Power, PowerOff, Edit3 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import DatabaseConnectionModal, { DatabaseConnectionData } from '../components/database/DatabaseConnectionModal';
+import { databaseService } from '../services/databaseService';
 
 interface DatabaseConnection {
   id: string;
@@ -11,8 +12,11 @@ interface DatabaseConnection {
   type: 'mysql' | 'postgresql' | 'mongodb' | 'sqlserver';
   host: string;
   port: number;
+  database?: string;
   status: 'connected' | 'disconnected' | 'error';
   lastConnected?: Date;
+  version?: string;
+  schemas?: string[];
 }
 
 const mockDatabases: DatabaseConnection[] = [
@@ -76,28 +80,103 @@ const getStatusIndicator = (status: string) => {
 export default function Dashboard() {
   const { user, logout } = useAuth();
   const { openTab } = useTabContext();
-  const [databases] = useState<DatabaseConnection[]>(mockDatabases);
+  const [databases, setDatabases] = useState<DatabaseConnection[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showNewConnectionModal, setShowNewConnectionModal] = useState(false);
+  const [contextMenu, setContextMenu] = useState<{
+    x: number;
+    y: number;
+    connection: DatabaseConnection;
+  } | null>(null);
+
+  useEffect(() => {
+    loadConnections();
+  }, []);
+
+  const loadConnections = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Check if user is authenticated
+      const token = localStorage.getItem('qovix_token');
+      if (!token) {
+        throw new Error('No authentication token found. Please log in again.');
+      }
+      
+      const connections = await databaseService.getUserConnections();
+      setDatabases(connections || []);
+    } catch (err) {
+      console.error('Failed to load connections:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load connections';
+      setError(errorMessage);
+      
+      // If it's an authentication error, redirect to login
+      if (errorMessage.includes('authentication') || errorMessage.includes('token')) {
+        setTimeout(() => {
+          logout();
+          window.location.reload();
+        }, 2000);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLogout = () => {
     logout();
     window.location.reload();
   };
 
-  const handleDatabaseClick = (database: DatabaseConnection) => {
-    openTab({
-      id: `db-${database.id}`,
-      type: 'database-explorer',
-      title: database.name,
-      data: {
-        id: database.id,
-        name: database.name,
-        type: database.type,
-        host: database.host,
-        port: database.port,
-        status: database.status
+  const handleDatabaseClick = async (database: DatabaseConnection) => {
+    try {
+      if (database.status === 'connected') {
+        // If already connected, just open the tab
+        openTab({
+          id: `db-${database.id}`,
+          type: 'database-explorer',
+          title: database.name,
+          data: {
+            id: database.id,
+            name: database.name,
+            type: database.type,
+            host: database.host,
+            port: database.port,
+            database: database.database,
+            status: database.status,
+            version: database.version,
+            schemas: database.schemas,
+          }
+        });
+      } else {
+        // Try to connect to the saved connection
+        const result = await databaseService.connectToSavedConnection(database.id);
+        
+        openTab({
+          id: database.id,
+          type: 'database-explorer',
+          title: database.name,
+          data: {
+            id: database.id,
+            name: database.name,
+            type: database.type,
+            host: database.host,
+            port: database.port,
+            database: result.database || database.database,
+            status: 'connected',
+            version: result.version,
+            schemas: result.schemas,
+          }
+        });
+
+        // Refresh the connections list to update status
+        loadConnections();
       }
-    });
+    } catch (err) {
+      console.error('Failed to connect to database:', err);
+      alert(err instanceof Error ? err.message : 'Failed to connect to database');
+    }
   };
 
   const handleNewConnection = () => {
@@ -125,7 +204,93 @@ export default function Dashboard() {
     }
     
     setShowNewConnectionModal(false);
+    
+    // Refresh the connections list to show the new connection
+    loadConnections();
   };
+
+  const handleContextMenu = (e: React.MouseEvent, connection: DatabaseConnection) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setContextMenu({
+      x: e.clientX,
+      y: e.clientY,
+      connection,
+    });
+  };
+
+  const handleDeleteConnection = async (connection: DatabaseConnection) => {
+    if (!confirm(`Are you sure you want to delete "${connection.name}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      await databaseService.deleteConnection(connection.id);
+      setDatabases(prev => prev.filter(db => db.id !== connection.id));
+      setContextMenu(null);
+    } catch (err) {
+      console.error('Failed to delete connection:', err);
+      alert(err instanceof Error ? err.message : 'Failed to delete connection');
+    }
+  };
+
+  const handleReconnect = async (connection: DatabaseConnection) => {
+    try {
+      // Optimistically update the UI
+      setDatabases(prev => prev.map(db => 
+        db.id === connection.id 
+          ? { ...db, status: 'connected' as const }
+          : db
+      ));
+      setContextMenu(null);
+
+      // Call the backend
+      await databaseService.connectToSavedConnection(connection.id);
+      
+      // Refresh to get the actual status from server
+      setTimeout(() => loadConnections(), 500);
+    } catch (err) {
+      console.error('Failed to reconnect:', err);
+      // Revert the optimistic update on error
+      setDatabases(prev => prev.map(db => 
+        db.id === connection.id 
+          ? { ...db, status: 'disconnected' as const }
+          : db
+      ));
+      alert(err instanceof Error ? err.message : 'Failed to reconnect to database');
+    }
+  };
+
+  const handleDisconnect = async (connection: DatabaseConnection) => {
+    try {
+      setDatabases(prev => prev.map(db => 
+        db.id === connection.id 
+          ? { ...db, status: 'disconnected' as const }
+          : db
+      ));
+      setContextMenu(null);
+
+      await databaseService.disconnectActiveConnection(connection.id);
+      
+      setTimeout(() => loadConnections(), 500);
+    } catch (err) {
+      console.error('Failed to disconnect:', err);
+      setDatabases(prev => prev.map(db => 
+        db.id === connection.id 
+          ? { ...db, status: 'connected' as const }
+          : db
+      ));
+      alert(err instanceof Error ? err.message : 'Failed to disconnect from database');
+    }
+  };
+
+  useEffect(() => {
+    const handleClickOutside = () => setContextMenu(null);
+    if (contextMenu) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [contextMenu]);
 
   return (
     <div className="h-full w-full bg-white flex flex-col">
@@ -188,22 +353,56 @@ export default function Dashboard() {
                 </p>
               </div>
               
-              <Button
-                onClick={handleNewConnection}
-                className="bg-[#bc3a08] hover:bg-[#a0340a] text-white shadow-sm"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                New Connection
-              </Button>
+              <div className="flex space-x-3">
+                <Button
+                  onClick={loadConnections}
+                  variant="outline"
+                  disabled={loading}
+                  className="shadow-sm"
+                >
+                  <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                  Refresh
+                </Button>
+                <Button
+                  onClick={handleNewConnection}
+                  className="bg-[#bc3a08] hover:bg-[#a0340a] text-white shadow-sm"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  New Connection
+                </Button>
+              </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {databases.map((db) => (
+          {error && (
+            <div className="mb-6 flex items-center space-x-2 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+              <AlertCircle className="h-5 w-5" />
+              <div>
+                <p className="font-medium">Failed to load connections</p>
+                <p className="text-sm">{error}</p>
+                <button
+                  onClick={loadConnections}
+                  className="mt-2 text-sm underline hover:no-underline"
+                >
+                  Try again
+                </button>
+              </div>
+            </div>
+          )}
+
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <RefreshCw className="h-8 w-8 animate-spin text-gray-400" />
+              <span className="ml-3 text-gray-600">Loading connections...</span>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {databases.map((db) => (
               <div
                 key={db.id}
                 onClick={() => handleDatabaseClick(db)}
-                className="group bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg hover:border-gray-300 transition-all cursor-pointer"
+                onContextMenu={(e) => handleContextMenu(e, db)}
+                className="group bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg hover:border-gray-300 transition-all cursor-pointer relative"
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center space-x-3">
@@ -261,7 +460,9 @@ export default function Dashboard() {
               </p>
             </div>
           </div>
+          )}
 
+          {!loading && databases.length > 0 && (
           <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-green-50 border border-green-200 rounded-lg p-4">
               <div className="flex items-center">
@@ -299,8 +500,63 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
+          )}
         </div>
       </main>
+
+      {contextMenu && (
+        <div
+          className="fixed bg-white border border-gray-200 rounded-lg shadow-lg py-2 z-50"
+          style={{
+            left: contextMenu.x,
+            top: contextMenu.y,
+          }}
+        >
+          <button
+            onClick={() => handleDatabaseClick(contextMenu.connection)}
+            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+          >
+            <Database className="h-4 w-4 mr-2" />
+            Open Connection
+          </button>
+          
+          {contextMenu.connection.status === 'connected' ? (
+            <button
+              onClick={() => handleDisconnect(contextMenu.connection)}
+              className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+            >
+              <PowerOff className="h-4 w-4 mr-2" />
+              Disconnect
+            </button>
+          ) : (
+            <button
+              onClick={() => handleReconnect(contextMenu.connection)}
+              className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+            >
+              <Power className="h-4 w-4 mr-2" />
+              Reconnect
+            </button>
+          )}
+          
+          <button
+            onClick={() => console.log('Edit connection:', contextMenu.connection)}
+            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+          >
+            <Edit3 className="h-4 w-4 mr-2" />
+            Edit Connection
+          </button>
+          
+          <hr className="my-1" />
+          
+          <button
+            onClick={() => handleDeleteConnection(contextMenu.connection)}
+            className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center"
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Delete Connection
+          </button>
+        </div>
+      )}
 
       <DatabaseConnectionModal
         isOpen={showNewConnectionModal}

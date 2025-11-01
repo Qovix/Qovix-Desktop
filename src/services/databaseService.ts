@@ -174,7 +174,84 @@ class DatabaseService {
     return data.data;
   }
 
-  async disconnectDatabase(connectionId: string): Promise<void> {
+  async getUserConnections(): Promise<DatabaseConnection[]> {
+    console.log('Fetching user connections...');
+    
+    const response = await fetch(`${this.baseUrl}/connections`, {
+      method: 'GET',
+      headers: this.getAuthHeaders(),
+    });
+
+    console.log('Response status:', response.status);
+    
+    const data = await response.json();
+    console.log('Response data:', data);
+    
+    if (!response.ok) {
+      throw new Error(data.message || `Failed to get connections (${response.status})`);
+    }
+
+    if (!data.data) {
+      console.log('No data.data in response, returning empty array');
+      return [];
+    }
+
+    if (!Array.isArray(data.data)) {
+      console.log('data.data is not an array:', typeof data.data, data.data);
+      return [];
+    }
+
+    console.log('Processing', data.data.length, 'connections');
+
+    return data.data.map((conn: any) => ({
+      id: conn.id,
+      name: conn.name,
+      type: conn.type,
+      host: conn.host,
+      port: conn.port,
+      database: conn.database,
+      status: conn.status,
+      lastConnected: conn.last_tested ? new Date(conn.last_tested) : undefined,
+      version: conn.version,
+      schemas: conn.schemas,
+    }));
+  }
+
+  async connectToSavedConnection(connectionId: string): Promise<{
+    id: string;
+    status: string;
+    message: string;
+    version?: string;
+    schemas?: string[];
+    database?: string;
+  }> {
+    const response = await fetch(`${this.baseUrl}/connections/${connectionId}/connect`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+    });
+
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to connect to saved connection');
+    }
+
+    return data.data;
+  }
+
+  async disconnectActiveConnection(connectionId: string): Promise<void> {
+    const response = await fetch(`${this.baseUrl}/connections/${connectionId}/disconnect`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.message || 'Failed to disconnect');
+    }
+  }
+
+  async deleteConnection(connectionId: string): Promise<void> {
     const response = await fetch(`${this.baseUrl}/connections/${connectionId}`, {
       method: 'DELETE',
       headers: this.getAuthHeaders(),
@@ -182,7 +259,7 @@ class DatabaseService {
 
     if (!response.ok) {
       const data = await response.json();
-      throw new Error(data.message || 'Failed to disconnect database');
+      throw new Error(data.message || 'Failed to delete connection');
     }
   }
 }
