@@ -2,7 +2,6 @@ import React from 'react';
 import { useTabContext } from '../../context/TabContext';
 import TabBar from './TabBar';
 import Dashboard from '../../pages/Dashboard';
-import DatabaseExplorer from '../../pages/DatabaseExplorer';
 import QueryConsole from '../../pages/QueryConsole';
 
 const AppLayout: React.FC = () => {
@@ -18,12 +17,8 @@ const AppLayout: React.FC = () => {
         return <Dashboard />;
         
       case 'database-explorer':
-        return (
-          <DatabaseExplorer
-            database={activeTab.data}
-            onBack={() => closeTab(activeTab.id)}
-          />
-        );
+        // Database explorer is now integrated into the main Dashboard
+        return <Dashboard />;
         
       case 'query-console':
         return (

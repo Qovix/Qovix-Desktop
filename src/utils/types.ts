@@ -95,3 +95,78 @@ export interface AIServiceStatus {
   lastError?: string;
   isLoading: boolean;
 }
+
+export interface DatabaseConnection {
+  id: string;
+  name: string;
+  type: 'mysql' | 'postgresql' | 'mongodb' | 'sqlserver';
+  host: string;
+  port: number;
+  database?: string;
+  status: 'connected' | 'disconnected' | 'error';
+  lastConnected?: Date;
+  version?: string;
+  schemas?: string[];
+}
+
+export interface ContextMenu {
+  x: number;
+  y: number;
+  type: 'database' | 'table';
+  itemName: string;
+  databaseName?: string;
+}
+
+export interface DatabaseSidebarProps {
+  databases: DatabaseConnection[];
+  loading: boolean;
+  error: string | null;
+  searchTerm: string;
+  onSearchChange: (value: string) => void;
+  expandedDatabases: Set<string>;
+  selectedTable: string | null;
+  selectedDatabase: DatabaseConnection | null;
+  schemas: Record<string, DatabaseSchema>;
+  schemaLoading: Record<string, boolean>;
+  connectingDatabase: string | null;
+  hoveredDatabase: string | null;
+  hoveredTable: string | null;
+  onHoverDatabase: (id: string | null) => void;
+  onHoverTable: (name: string | null) => void;
+  onNewConnection: () => void;
+  onLogout: () => void;
+  onLoadConnections: () => void;
+  onToggleDatabase: (database: DatabaseConnection) => void;
+  onConnect: (database: DatabaseConnection) => void;
+  onTableClick: (tableName: string, database: DatabaseConnection) => void;
+  onContextMenu: (e: React.MouseEvent, type: 'database' | 'table', itemName: string, databaseName?: string) => void;
+}
+
+export interface DatabaseItemProps {
+  database: DatabaseConnection;
+  isExpanded: boolean;
+  schema: DatabaseSchema | undefined;
+  isSchemaLoading: boolean;
+  filteredTables: Array<{ name: string; type: 'table'; columns: any[]; rowCount?: number }>;
+  selectedTable: string | null;
+  selectedDatabase: DatabaseConnection | null;
+  connectingDatabase: string | null;
+  hoveredDatabase: string | null;
+  hoveredTable: string | null;
+  onHoverDatabase: (id: string | null) => void;
+  onHoverTable: (name: string | null) => void;
+  onToggleDatabase: (database: DatabaseConnection) => void;
+  onConnect: (database: DatabaseConnection) => void;
+  onTableClick: (tableName: string, database: DatabaseConnection) => void;
+  onContextMenu: (e: React.MouseEvent, type: 'database' | 'table', itemName: string, databaseName?: string) => void;
+}
+
+export interface MainContentAreaProps {
+  selectedTable: string | null;
+  selectedDatabase: DatabaseConnection | null;
+  databases: DatabaseConnection[];
+  schemas: Record<string, DatabaseSchema>;
+  isAIOpen: boolean;
+  onToggleAI: () => void;
+  onRunQuery: (query: string) => void;
+}
