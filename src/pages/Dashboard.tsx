@@ -100,7 +100,6 @@ export default function Dashboard() {
 
   const toggleDatabase = async (database: DatabaseConnection) => {
     if (database.status !== 'connected') {
-      // Try to connect first
       await handleConnect(database);
       return;
     }
@@ -110,7 +109,6 @@ export default function Dashboard() {
       newExpanded.delete(database.id);
     } else {
       newExpanded.add(database.id);
-      // Load schema if not already loaded
       if (!schemas[database.id]) {
         loadDatabaseSchema(database);
       }
@@ -123,16 +121,13 @@ export default function Dashboard() {
     
     try {
       if (database.status === 'connected') {
-        // If already connected, just expand
         setExpandedDatabases(prev => new Set([...prev, database.id]));
         if (!schemas[database.id]) {
           loadDatabaseSchema(database);
         }
       } else {
-        // Connect to database
         const result = await databaseService.connectToSavedConnection(database.id);
         
-        // Update database status
         setDatabases(prev => 
           prev.map(db => 
             db.id === database.id 
@@ -141,7 +136,6 @@ export default function Dashboard() {
           )
         );
         
-        // Auto-expand and load schema
         setExpandedDatabases(prev => new Set([...prev, database.id]));
         loadDatabaseSchema({ ...database, status: 'connected' as const });
       }
@@ -165,18 +159,18 @@ export default function Dashboard() {
 
     try {
       const apiSchema = await databaseService.getSchema(database.id);
+      console.log('Loaded database schema:', apiSchema);
       const uiSchema: DatabaseSchema = {
         name: apiSchema.name,
         tables: apiSchema.tables.map(table => ({
           name: table.name,
           type: 'table' as const,
           columns: table.columns,
-          rowCount: undefined 
         })),
         views: [], 
         procedures: []
       };
-
+      
       setSchemas(prev => ({ ...prev, [database.id]: uiSchema }));
     } catch (err) {
       console.error('Failed to load database schema:', err);
@@ -236,14 +230,12 @@ export default function Dashboard() {
         )
       );
       
-      // Collapse the database
       setExpandedDatabases(prev => {
         const newSet = new Set(prev);
         newSet.delete(database.id);
         return newSet;
       });
       
-      // Clear selection if it was from this database
       if (selectedDatabase?.id === database.id) {
         setSelectedTable(null);
         setSelectedDatabase(null);
@@ -253,7 +245,6 @@ export default function Dashboard() {
       setTimeout(() => loadConnections(), 500);
     } catch (err) {
       console.error('Failed to disconnect:', err);
-      // Revert the optimistic update on error
       setDatabases(prev => prev.map(db => 
         db.id === database.id 
           ? { ...db, status: 'connected' as const }

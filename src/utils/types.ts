@@ -30,7 +30,6 @@ export interface SortConfig {
 export interface DatabaseTable {
   name: string;
   type: 'table' | 'view';
-  rowCount?: number;
   columns?: any[];
 }
 

@@ -57,10 +57,6 @@ const TableItem: React.FC<TableItemProps> = ({
               <MoreVertical className="h-3 w-3 text-gray-500" />
             </button>
           )}
-          
-          <span className="text-xs text-gray-400">
-            {table.rowCount || '—'}
-          </span>
         </div>
       </button>
     </div>
