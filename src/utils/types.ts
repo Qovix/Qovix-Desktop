@@ -169,3 +169,26 @@ export interface MainContentAreaProps {
   onToggleAI: () => void;
   onRunQuery: (query: string) => void;
 }
+
+export interface User {
+  id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  username: string;
+  is_verified: boolean;
+  provider: string;
+  avatar?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AuthContextType {
+  user: User | null;
+  token: string | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  login: (token: string, user: User) => void;
+  logout: () => void;
+  updateUser: (user: User) => void;
+}
