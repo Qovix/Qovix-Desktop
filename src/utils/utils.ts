@@ -1,25 +1,7 @@
 import React from "react";
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
-import { 
-  Plus, 
-  Database, 
-  Server, 
-  ChevronRight, 
-  ChevronDown,
-  Settings, 
-  LogOut, 
-  RefreshCw, 
-  AlertCircle, 
-  Trash2, 
-  Table,
-  MoreVertical,
-  Loader2,
-  Eye,
-  Wifi,
-  WifiOff,
-  Search,
-} from 'lucide-react';
+import { Database,Server } from 'lucide-react';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
