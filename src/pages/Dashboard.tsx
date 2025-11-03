@@ -10,17 +10,32 @@ import {
   MainContentArea 
 } from '../components/dashboard';
 
-export default function Dashboard() {
+interface DashboardProps {
+  initialSelectedTable?: string;
+  initialSelectedDatabase?: DatabaseConnection;
+  showOnlyTableView?: boolean;
+}
+
+export default function Dashboard({ 
+  initialSelectedTable, 
+  initialSelectedDatabase, 
+  showOnlyTableView = false 
+}: DashboardProps = {}) {
   const { user, logout } = useAuth();
-  const { openTab } = useTabContext();
+  const { openTab, updateTabData, activeTabId, tabs } = useTabContext();
   const [databases, setDatabases] = useState<DatabaseConnection[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showNewConnectionModal, setShowNewConnectionModal] = useState(false);
   
   const [expandedDatabases, setExpandedDatabases] = useState<Set<string>>(new Set());
-  const [selectedTable, setSelectedTable] = useState<string | null>(null);
-  const [selectedDatabase, setSelectedDatabase] = useState<DatabaseConnection | null>(null);
+  // Get the current active tab to determine selected table/database
+  const activeTab = tabs.find(tab => tab.id === activeTabId);
+  const tabSelectedTable = activeTab?.data?.tableName || initialSelectedTable;
+  const tabSelectedDatabase = activeTab?.data?.database || initialSelectedDatabase;
+  
+  const [selectedTable, setSelectedTable] = useState<string | null>(tabSelectedTable || null);
+  const [selectedDatabase, setSelectedDatabase] = useState<DatabaseConnection | null>(tabSelectedDatabase || null);
   const [connectingDatabase, setConnectingDatabase] = useState<string | null>(null);
   const [hoveredDatabase, setHoveredDatabase] = useState<string | null>(null);
   const [hoveredTable, setHoveredTable] = useState<string | null>(null);
@@ -35,6 +50,38 @@ export default function Dashboard() {
   useEffect(() => {
     loadConnections();
   }, []);
+
+  // Effect to sync selected table/database with active tab
+  useEffect(() => {
+    const activeTab = tabs.find(tab => tab.id === activeTabId);
+    if (activeTab?.data?.tableName && activeTab?.data?.database) {
+      setSelectedTable(activeTab.data.tableName);
+      setSelectedDatabase(activeTab.data.database);
+      
+      // Ensure the database is expanded and schema is loaded
+      setExpandedDatabases(prev => new Set([...prev, activeTab.data.database.id]));
+      if (!schemas[activeTab.data.database.id]) {
+        loadDatabaseSchema(activeTab.data.database);
+      }
+    } else if (activeTab?.type === 'dashboard') {
+      // If we're on the main dashboard and no specific table is selected, clear selection
+      if (!showOnlyTableView) {
+        setSelectedTable(null);
+        setSelectedDatabase(null);
+      }
+    }
+  }, [activeTabId, tabs, schemas, showOnlyTableView]);
+
+  // Effect to handle initial table selection for table-view tabs
+  useEffect(() => {
+    if (showOnlyTableView && initialSelectedDatabase && initialSelectedTable) {
+      // Ensure the database is expanded and schema is loaded
+      setExpandedDatabases(prev => new Set([...prev, initialSelectedDatabase.id]));
+      if (!schemas[initialSelectedDatabase.id]) {
+        loadDatabaseSchema(initialSelectedDatabase);
+      }
+    }
+  }, [showOnlyTableView, initialSelectedDatabase, initialSelectedTable]);
 
   const loadConnections = async () => {
     try {
@@ -148,6 +195,53 @@ export default function Dashboard() {
   };
 
   const handleTableClick = (tableName: string, database: DatabaseConnection) => {
+    const currentTab = tabs.find(tab => tab.id === activeTabId);
+    
+    // If we're on a table-view tab, update the current tab's content
+    if (currentTab?.type === 'table-view') {
+      const newTabId = `table-${database.id}-${tableName}`;
+      
+      // Check if a tab for this table already exists
+      const existingTab = tabs.find(tab => tab.id === newTabId);
+      if (existingTab) {
+        // Switch to existing tab
+        openTab({
+          id: newTabId,
+          type: 'table-view',
+          title: `${database.name}.${tableName}`,
+          data: {
+            tableName,
+            database
+          }
+        });
+      } else {
+        // Create new tab
+        openTab({
+          id: newTabId,
+          type: 'table-view',
+          title: `${database.name}.${tableName}`,
+          data: {
+            tableName,
+            database
+          }
+        });
+      }
+    } else {
+      // For dashboard tab, always open a new tab
+      const tabId = `table-${database.id}-${tableName}`;
+      
+      openTab({
+        id: tabId,
+        type: 'table-view',
+        title: `${database.name}.${tableName}`,
+        data: {
+          tableName,
+          database
+        }
+      });
+    }
+    
+    // Update the current local state for immediate UI feedback
     setSelectedTable(tableName);
     setSelectedDatabase(database);
   };
@@ -205,6 +299,14 @@ export default function Dashboard() {
       case 'disconnect':
         if (contextMenu.type === 'database' && database) {
           handleDisconnectFromSidebar(database);
+        }
+        break;
+      case 'open-in-tab':
+        if (contextMenu.type === 'table' && contextMenu.databaseName) {
+          const tableDatabase = databases.find(db => db.id === contextMenu.databaseName);
+          if (tableDatabase) {
+            handleTableClick(contextMenu.itemName, tableDatabase);
+          }
         }
         break;
       case 'settings':
@@ -319,11 +421,13 @@ export default function Dashboard() {
         onAction={handleContextAction}
       />
 
-      <DatabaseConnectionModal
-        isOpen={showNewConnectionModal}
-        onClose={() => setShowNewConnectionModal(false)}
-        onConnect={handleConnectionCreated}
-      />
+      {!showOnlyTableView && (
+        <DatabaseConnectionModal
+          isOpen={showNewConnectionModal}
+          onClose={() => setShowNewConnectionModal(false)}
+          onConnect={handleConnectionCreated}
+        />
+      )}
     </div>
   );
 }

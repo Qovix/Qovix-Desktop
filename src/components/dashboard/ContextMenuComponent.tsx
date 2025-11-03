@@ -60,6 +60,14 @@ const ContextMenuComponent: React.FC<ContextMenuComponentProps> = ({
       ) : (
         <>
           <button
+            onClick={() => onAction('open-in-tab')}
+            className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
+          >
+            <Eye className="h-4 w-4" />
+            <span>Open in New Tab</span>
+          </button>
+          
+          <button
             onClick={() => onAction('view-structure')}
             className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
           >

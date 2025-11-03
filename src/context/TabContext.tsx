@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 export interface Tab {
   id: string;
-  type: 'dashboard' | 'database-explorer' | 'query-console';
+  type: 'dashboard' | 'database-explorer' | 'query-console' | 'table-view';
   title: string;
   icon?: string;
   data?: any;
@@ -16,6 +16,7 @@ interface TabContextType {
   closeTab: (tabId: string) => void;
   setActiveTab: (tabId: string) => void;
   updateTabTitle: (tabId: string, title: string) => void;
+  updateTabData: (tabId: string, data: any) => void;
 }
 
 const TabContext = createContext<TabContextType | undefined>(undefined);
@@ -40,6 +41,10 @@ export const TabProvider: React.FC<TabProviderProps> = ({ children }) => {
       title: 'Dashboard',
       icon: 'home',
       isActive: true,
+      data: {
+        tableName: null,
+        database: null
+      }
     }
   ]);
   
@@ -105,6 +110,14 @@ export const TabProvider: React.FC<TabProviderProps> = ({ children }) => {
     );
   };
 
+  const updateTabData = (tabId: string, data: any) => {
+    setTabs(prevTabs => 
+      prevTabs.map(tab => 
+        tab.id === tabId ? { ...tab, data: { ...tab.data, ...data } } : tab
+      )
+    );
+  };
+
   return (
     <TabContext.Provider value={{
       tabs,
@@ -113,6 +126,7 @@ export const TabProvider: React.FC<TabProviderProps> = ({ children }) => {
       closeTab,
       setActiveTab,
       updateTabTitle,
+      updateTabData,
     }}>
       {children}
     </TabContext.Provider>

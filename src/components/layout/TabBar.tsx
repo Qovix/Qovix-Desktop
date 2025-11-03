@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Home, Database, Terminal } from 'lucide-react';
+import { X, Home, Database, Terminal, Table } from 'lucide-react';
 import { useTabContext } from '../../context/TabContext';
 
 const TabBar: React.FC = () => {
@@ -11,6 +11,8 @@ const TabBar: React.FC = () => {
         return <Home className="h-4 w-4" />;
       case 'database-explorer':
         return <Database className="h-4 w-4" />;
+      case 'table-view':
+        return <Table className="h-4 w-4" />;
       case 'query-console':
         return <Terminal className="h-4 w-4" />;
       default:

@@ -20,6 +20,15 @@ const AppLayout: React.FC = () => {
         // Database explorer is now integrated into the main Dashboard
         return <Dashboard />;
         
+      case 'table-view':
+        return (
+          <Dashboard 
+            initialSelectedTable={activeTab.data?.tableName}
+            initialSelectedDatabase={activeTab.data?.database}
+            showOnlyTableView={true}
+          />
+        );
+        
       case 'query-console':
         return (
           <QueryConsole
