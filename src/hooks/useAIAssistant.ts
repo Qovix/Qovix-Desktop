@@ -213,13 +213,11 @@ export const useAIAssistant = (databaseId?: string, databaseName?: string) => {
   }, []);
 
   return {
-    // State
     messages,
     isLoading,
     serviceStatus,
     queryHistory,
     
-    // Actions
     generateSQL,
     validateSQL,
     explainSQL,
@@ -228,7 +226,6 @@ export const useAIAssistant = (databaseId?: string, databaseName?: string) => {
     cancelCurrentRequest,
     addMessage,
     
-    // Utils
     canSendMessage: !isLoading && serviceStatus.isConnected,
   };
 };
