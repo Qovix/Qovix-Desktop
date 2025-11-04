@@ -94,7 +94,8 @@ const AIQueryAssistant: React.FC<AIQueryAssistantProps> = ({
     }
   };
 
-  const handleRunQuery = (sqlQuery: string) => {
+  const handleRunQuery = async (sqlQuery: string) => {
+    // Use the parent component's onRunQuery instead of executing in chat
     onRunQuery(sqlQuery);
   };
 
@@ -239,40 +240,42 @@ const AIQueryAssistant: React.FC<AIQueryAssistantProps> = ({
                 dangerouslySetInnerHTML={{ __html: formatMessage(message.content) }}
               />
               
-              {message.sql_query && (
+                            {message.sql_query && (
                 <div className="mt-3 p-3 bg-gray-800 rounded text-green-400 font-mono text-xs">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center space-x-2">
                       <Code className="h-3 w-3" />
-                      <span className="text-gray-300">Generated SQL</span>
-                      {message.is_valid === false && (
-                        <span className="text-red-400 text-xs">⚠ Validation Issues</span>
-                      )}
+                      <span className="text-green-300 font-medium">Generated SQL</span>
                     </div>
                     <div className="flex items-center space-x-1">
-                      <button
+                      <Button
+                        size="sm"
+                        variant="ghost"
                         onClick={() => copyToClipboard(message.sql_query!)}
-                        className="p-1 hover:bg-gray-700 rounded text-gray-400 hover:text-white"
-                        title="Copy query"
+                        className="h-6 px-2 text-green-400 hover:text-green-300 hover:bg-gray-700"
                       >
                         <Copy className="h-3 w-3" />
-                      </button>
-                      {message.is_valid !== false && (
-                        <button
-                          onClick={() => handleRunQuery(message.sql_query!)}
-                          className="p-1 hover:bg-gray-700 rounded text-gray-400 hover:text-green-400"
-                          title="Run query"
-                        >
-                          <Play className="h-3 w-3" />
-                        </button>
-                      )}
-                      <button
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleRunQuery(message.sql_query!)}
+                        className="h-6 px-2 text-green-400 hover:text-green-300 hover:bg-gray-700"
+                        disabled={isLoading}
+                        title="Execute query and show results in main area"
+                      >
+                        <Play className="h-3 w-3" />
+                        Run
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
                         onClick={() => handleExplainQuery(message.sql_query!)}
-                        className="p-1 hover:bg-gray-700 rounded text-gray-400 hover:text-blue-400"
-                        title="Explain query"
+                        className="h-6 px-2 text-green-400 hover:text-green-300 hover:bg-gray-700"
                       >
                         <MessageSquare className="h-3 w-3" />
-                      </button>
+                        Explain
+                      </Button>
                     </div>
                   </div>
                   <pre className="whitespace-pre-wrap">{message.sql_query}</pre>
@@ -287,6 +290,8 @@ const AIQueryAssistant: React.FC<AIQueryAssistantProps> = ({
                   )}
                 </div>
               )}
+
+
               
               {message.isLoading && (
                 <div className="flex items-center space-x-2 mt-2">

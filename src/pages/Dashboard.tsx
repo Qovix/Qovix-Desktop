@@ -47,6 +47,17 @@ export default function Dashboard({
   
   const [contextMenu, setContextMenu] = useState<ContextMenu | null>(null);
 
+  const [queryResult, setQueryResult] = useState<{
+    query: string;
+    data: any[];
+    columns: string[];
+    totalRows: number;
+    database: DatabaseConnection;
+    executionTime?: number;
+  } | null>(null);
+  const [queryLoading, setQueryLoading] = useState(false);
+  const [queryError, setQueryError] = useState<string | null>(null);
+
   useEffect(() => {
     loadConnections();
   }, []);
@@ -356,18 +367,52 @@ export default function Dashboard({
     }
   };
 
-  const handleRunQuery = (query: string) => {
+  const handleRunQuery = async (query: string) => {
     if (!selectedDatabase) return;
-    
-    openTab({
-      id: `query-${selectedDatabase.id}-${Date.now()}`,
-      type: 'query-console',
-      title: `Query - ${selectedDatabase.name}`,
-      data: {
+
+    setQueryLoading(true);
+    setQueryError(null);
+    setQueryResult(null);
+
+    try {
+      // Clean the query similar to the AI assistant
+      const cleanedQuery = query
+        .replace(/--.*$/gm, '')
+        .replace(/\/\*[\s\S]*?\*\//g, '')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .replace(/;?\s*$/, ';');
+
+      const startTime = Date.now();
+      const result = await databaseService.executeQuery(selectedDatabase.id, cleanedQuery, 1000);
+      const executionTime = Date.now() - startTime;
+
+      setQueryResult({
+        query: cleanedQuery,
+        data: result.rows.map(row => {
+          const rowObj: any = {};
+          result.columns.forEach((colName, index) => {
+            rowObj[colName] = row[index];
+          });
+          return rowObj;
+        }),
+        columns: result.columns,
+        totalRows: result.count,
         database: selectedDatabase,
-        initialQuery: query
-      }
-    });
+        executionTime,
+      });
+    } catch (err) {
+      console.error('Failed to execute query:', err);
+      setQueryError(err instanceof Error ? err.message : 'Failed to execute query');
+    } finally {
+      setQueryLoading(false);
+    }
+  };
+
+  const clearQueryResults = () => {
+    setQueryResult(null);
+    setQueryError(null);
+    setQueryLoading(false);
   };
 
   useEffect(() => {
@@ -413,6 +458,10 @@ export default function Dashboard({
         isAIOpen={isAIOpen}
         onToggleAI={() => setIsAIOpen(!isAIOpen)}
         onRunQuery={handleRunQuery}
+        queryResult={queryResult}
+        queryLoading={queryLoading}
+        queryError={queryError}
+        onClearQueryResults={clearQueryResults}
       />
 
       <ContextMenuComponent

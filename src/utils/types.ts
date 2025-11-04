@@ -63,6 +63,14 @@ export interface DatabaseExplorerProps {
   };
   onBack: () => void;
 }
+export interface QueryResultData {
+  columns: string[];
+  rows: any[][];
+  count: number;
+  message?: string;
+  executionTime?: number;
+}
+
 export interface AIMessage {
   id: string;
   type: 'user' | 'assistant' | 'system' | 'error';
@@ -72,6 +80,7 @@ export interface AIMessage {
   confidence?: number;
   is_valid?: boolean;
   validation_errors?: string[];
+  query_result?: QueryResultData;
   timestamp: Date;
   isLoading?: boolean;
 }
@@ -162,6 +171,17 @@ export interface MainContentAreaProps {
   isAIOpen: boolean;
   onToggleAI: () => void;
   onRunQuery: (query: string) => void;
+  queryResult?: {
+    query: string;
+    data: any[];
+    columns: string[];
+    totalRows: number;
+    database: DatabaseConnection;
+    executionTime?: number;
+  } | null;
+  queryLoading?: boolean;
+  queryError?: string | null;
+  onClearQueryResults?: () => void;
 }
 export interface User {
   id: string;
