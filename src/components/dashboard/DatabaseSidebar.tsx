@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { 
   Plus, 
   LogOut, 
@@ -10,7 +10,7 @@ import { Input } from '../ui/input';
 import { DatabaseSidebarProps } from '../../utils/types';
 import DatabaseItem from './DatabaseItem';
 
-const DatabaseSidebar: React.FC<DatabaseSidebarProps> = ({
+const DatabaseSidebar: React.FC<DatabaseSidebarProps> = memo(({
   databases,
   loading,
   error,
@@ -136,6 +136,6 @@ const DatabaseSidebar: React.FC<DatabaseSidebarProps> = ({
       </div>
     </div>
   );
-};
+});
 
 export default DatabaseSidebar;

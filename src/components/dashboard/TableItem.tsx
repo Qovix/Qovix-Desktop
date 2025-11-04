@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Table, MoreVertical } from 'lucide-react';
 import { DatabaseConnection } from '../../utils/types';
 
@@ -12,7 +12,7 @@ interface TableItemProps {
   onContextMenu: (e: React.MouseEvent, type: 'database' | 'table', itemName: string, databaseName?: string) => void;
 }
 
-const TableItem: React.FC<TableItemProps> = ({
+const TableItem: React.FC<TableItemProps> = memo(({
   table,
   database,
   isSelected,
@@ -61,6 +61,6 @@ const TableItem: React.FC<TableItemProps> = ({
       </button>
     </div>
   );
-};
+});
 
 export default TableItem;

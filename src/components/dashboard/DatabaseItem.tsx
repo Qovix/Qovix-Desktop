@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { 
   Database,
   ChevronRight, 
@@ -11,7 +11,7 @@ import { DatabaseItemProps } from '../../utils/types';
 import { getDatabaseIcon, getStatusIndicator } from '../../utils/utils';
 import TableItem from './TableItem';
 
-const DatabaseItem: React.FC<DatabaseItemProps> = ({
+const DatabaseItem: React.FC<DatabaseItemProps> = memo(({
   database,
   isExpanded,
   schema,
@@ -151,6 +151,6 @@ const DatabaseItem: React.FC<DatabaseItemProps> = ({
       )}
     </div>
   );
-};
+});
 
 export default DatabaseItem;
