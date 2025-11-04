@@ -1,6 +1,7 @@
 import { motion } from 'motion/react';
+import { memo } from 'react';
 
-export function AnimatedBackground() {
+export const AnimatedBackground = memo(function AnimatedBackground() {
   const sqlKeywords = [
     'SELECT',
     'FROM',
@@ -240,4 +241,4 @@ export function AnimatedBackground() {
       ))}
     </>
   );
-}
+});
