@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { AlertCircle, Database, Loader2, RefreshCw, Brain, X, Clock } from 'lucide-react';
 import { DatabaseConnection, DatabaseSchema, MainContentAreaProps } from '../../utils/types';
 import { TableDataView } from '../database';
@@ -164,7 +164,7 @@ const TableDataViewWrapper: React.FC<{
   );
 });
 
-const MainContentArea: React.FC<MainContentAreaProps> = ({
+const MainContentArea: React.FC<MainContentAreaProps> = memo(({
   selectedTable,
   selectedDatabase,
   databases,
@@ -350,6 +350,6 @@ const MainContentArea: React.FC<MainContentAreaProps> = ({
       {renderTableData()}
     </div>
   );
-};
+});
 
 export default MainContentArea;

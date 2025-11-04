@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, memo } from 'react';
 import { 
   Brain, 
   Send, 
@@ -25,7 +25,7 @@ import { Button } from '../ui/button';
 import { useAIAssistant } from '../../hooks/useAIAssistant';
 import { AIMessage, AIQueryAssistantProps } from '../../utils/types';
 
-const AIQueryAssistant: React.FC<AIQueryAssistantProps> = ({
+const AIQueryAssistant: React.FC<AIQueryAssistantProps> = memo(({
   isOpen,
   onToggle,
   database,
@@ -437,6 +437,6 @@ const AIQueryAssistant: React.FC<AIQueryAssistantProps> = ({
       </div>
     </div>
   );
-};
+});
 
 export default AIQueryAssistant;

@@ -217,3 +217,23 @@ export interface AIQueryAssistantProps {
   onRunQuery: (query: string) => void;
   className?: string;
 }
+
+export interface DatabaseConnectionModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConnect: (connection: DatabaseConnectionData) => void;
+}
+
+export interface DatabaseConnectionData {
+  name: string;
+  type: 'mysql' | 'postgresql' | 'mongodb' | 'sqlserver';
+  host: string;
+  port: string;
+  database: string;
+  username: string;
+  password: string;
+  saveConnection: boolean;
+  connectionId?: string;
+  version?: string;
+  schemas?: string[];
+}

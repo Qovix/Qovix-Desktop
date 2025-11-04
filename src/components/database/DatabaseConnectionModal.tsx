@@ -1,29 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import { X, Database, Check, AlertCircle } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { databaseService } from '../../services/databaseService';
-
-interface DatabaseConnectionModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onConnect: (connection: DatabaseConnectionData) => void;
-}
-
-export interface DatabaseConnectionData {
-  name: string;
-  type: 'mysql' | 'postgresql' | 'mongodb' | 'sqlserver';
-  host: string;
-  port: string;
-  database: string;
-  username: string;
-  password: string;
-  saveConnection: boolean;
-  connectionId?: string;
-  version?: string;
-  schemas?: string[];
-}
+import { DatabaseConnectionModalProps, DatabaseConnectionData } from '../../utils/types';
 
 const databaseTypes = [
   { value: 'sqlserver', label: 'SQL Server', port: '1433', icon: '🏢', available: true },
@@ -31,7 +12,7 @@ const databaseTypes = [
   { value: 'postgresql', label: 'PostgreSQL', port: '5432', icon: '🐘', available: false },
 ];
 
-export default function DatabaseConnectionModal({ isOpen, onClose, onConnect }: DatabaseConnectionModalProps) {
+const DatabaseConnectionModal = memo(function DatabaseConnectionModal({ isOpen, onClose, onConnect }: DatabaseConnectionModalProps) {
   const [formData, setFormData] = useState<DatabaseConnectionData>({
     name: '',
     type: 'sqlserver',
@@ -42,7 +23,7 @@ export default function DatabaseConnectionModal({ isOpen, onClose, onConnect }: 
     password: '',
     saveConnection: true,
   });
-  
+
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState('');
   const [step, setStep] = useState<'form' | 'testing' | 'success'>('form');
@@ -208,21 +189,19 @@ export default function DatabaseConnectionModal({ isOpen, onClose, onConnect }: 
                       type="button"
                       onClick={() => db.available && handleTypeChange(db.value)}
                       disabled={!db.available}
-                      className={`p-3 rounded-lg border text-left transition-all ${
-                        formData.type === db.value
+                      className={`p-3 rounded-lg border text-left transition-all ${formData.type === db.value
                           ? 'border-[#bc3a08] bg-[#bc3a08]/5'
                           : db.available
-                          ? 'border-gray-200 hover:border-gray-300'
-                          : 'border-gray-100 bg-gray-50 cursor-not-allowed'
-                      }`}
+                            ? 'border-gray-200 hover:border-gray-300'
+                            : 'border-gray-100 bg-gray-50 cursor-not-allowed'
+                        }`}
                     >
                       <div className="flex items-center space-x-2">
                         <span className={`text-lg ${!db.available ? 'grayscale opacity-50' : ''}`}>
                           {db.icon}
                         </span>
-                        <span className={`font-medium text-sm ${
-                          !db.available ? 'text-gray-400' : ''
-                        }`}>
+                        <span className={`font-medium text-sm ${!db.available ? 'text-gray-400' : ''
+                          }`}>
                           {db.label}
                         </span>
                       </div>
@@ -345,4 +324,6 @@ export default function DatabaseConnectionModal({ isOpen, onClose, onConnect }: 
       </div>
     </div>
   );
-}
+});
+
+export default DatabaseConnectionModal;

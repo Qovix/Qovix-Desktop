@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, memo } from 'react';
 import { 
   ChevronUp, 
   ChevronDown, 
@@ -19,7 +19,7 @@ import { SortConfig, TableDataViewProps, TableColumn } from 'src/utils/types';
 import AIQueryAssistant from './AIQueryAssistant';
 
 
-const TableDataView: React.FC<TableDataViewProps> = ({
+const TableDataView: React.FC<TableDataViewProps> = memo(({
   tableName,
   columns,
   data,
@@ -480,6 +480,6 @@ const TableDataView: React.FC<TableDataViewProps> = ({
       )}
     </div>
   );
-};
+});
 
 export default TableDataView;

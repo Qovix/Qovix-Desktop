@@ -3,7 +3,7 @@ import { cn } from "../../utils/utils";
 
 interface LabelProps extends React.LabelHTMLAttributes<HTMLLabelElement> {}
 
-const Label = React.forwardRef<HTMLLabelElement, LabelProps>(
+const Label = React.memo(React.forwardRef<HTMLLabelElement, LabelProps>(
   ({ className, ...props }, ref) => {
     return (
       <label
@@ -16,7 +16,7 @@ const Label = React.forwardRef<HTMLLabelElement, LabelProps>(
       />
     );
   }
-);
+));
 
 Label.displayName = "Label";
 

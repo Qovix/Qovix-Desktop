@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTabContext } from '../context/TabContext';
-import DatabaseConnectionModal, { DatabaseConnectionData } from '../components/database/DatabaseConnectionModal';
+import DatabaseConnectionModal  from '../components/database/DatabaseConnectionModal';
 import { databaseService, DatabaseSchema as APISchema } from '../services/databaseService';
-import { ContextMenu, DatabaseConnection, DatabaseSchema } from '../utils/types';
+import { ContextMenu, DatabaseConnection, DatabaseConnectionData, DatabaseSchema } from '../utils/types';
 import { 
   DatabaseSidebar, 
   ContextMenuComponent, 

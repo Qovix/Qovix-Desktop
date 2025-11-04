@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { 
   RefreshCw, 
   WifiOff, 
@@ -14,7 +14,7 @@ interface ContextMenuComponentProps {
   onAction: (action: string) => void;
 }
 
-const ContextMenuComponent: React.FC<ContextMenuComponentProps> = ({
+const ContextMenuComponent: React.FC<ContextMenuComponentProps> = memo(({
   contextMenu,
   databases,
   onAction,
@@ -88,6 +88,6 @@ const ContextMenuComponent: React.FC<ContextMenuComponentProps> = ({
       )}
     </div>
   );
-};
+});
 
 export default ContextMenuComponent;
