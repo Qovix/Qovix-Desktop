@@ -23,20 +23,7 @@ import {
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useAIAssistant } from '../../hooks/useAIAssistant';
-import { AIMessage } from '../../utils/types';
-
-interface AIQueryAssistantProps {
-  isOpen: boolean;
-  onToggle: () => void;
-  database: {
-    id: string;
-    name: string;
-    type: string;
-  };
-  selectedTable?: string;
-  onRunQuery: (query: string) => void;
-  className?: string;
-}
+import { AIMessage, AIQueryAssistantProps } from '../../utils/types';
 
 const AIQueryAssistant: React.FC<AIQueryAssistantProps> = ({
   isOpen,

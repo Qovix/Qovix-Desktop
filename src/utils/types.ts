@@ -5,11 +5,9 @@ export interface TableColumn {
   primaryKey?: boolean;
   foreignKey?: boolean;
 }
-
 export interface TableRow {
   [key: string]: any;
 }
-
 export interface TableDataViewProps {
   tableName: string;
   columns: TableColumn[];
@@ -21,25 +19,21 @@ export interface TableDataViewProps {
   onEditRow: (row: TableRow, index: number) => void;
   onDeleteRow: (row: TableRow, index: number) => void;
 }
-
 export interface SortConfig {
   field: string;
   direction: 'asc' | 'desc';
 }
-
 export interface DatabaseTable {
   name: string;
   type: 'table' | 'view';
   columns?: any[];
 }
-
 export interface DatabaseSchema {
   name: string;
   tables: DatabaseTable[];
   views: DatabaseTable[];
   procedures?: string[];
 }
-
 export interface ContextMenuProps {
   x: number;
   y: number;
@@ -50,7 +44,6 @@ export interface ContextMenuProps {
   onClose: () => void;
   onAction: (action: string, target: any) => void;
 }
-
 export interface DatabaseExplorerProps {
   database: {
     id: string;
@@ -61,8 +54,6 @@ export interface DatabaseExplorerProps {
   };
   onBack: () => void;
 }
-
-// AI Assistant Types
 export interface AIMessage {
   id: string;
   type: 'user' | 'assistant' | 'system' | 'error';
@@ -75,7 +66,6 @@ export interface AIMessage {
   timestamp: Date;
   isLoading?: boolean;
 }
-
 export interface AIQueryAssistantProps {
   isOpen: boolean;
   onToggle: () => void;
@@ -88,13 +78,11 @@ export interface AIQueryAssistantProps {
   onRunQuery: (query: string) => void;
   className?: string;
 }
-
 export interface AIServiceStatus {
   isConnected: boolean;
   lastError?: string;
   isLoading: boolean;
 }
-
 export interface DatabaseConnection {
   id: string;
   name: string;
@@ -107,7 +95,6 @@ export interface DatabaseConnection {
   version?: string;
   schemas?: string[];
 }
-
 export interface ContextMenu {
   x: number;
   y: number;
@@ -115,7 +102,6 @@ export interface ContextMenu {
   itemName: string;
   databaseName?: string;
 }
-
 export interface DatabaseSidebarProps {
   databases: DatabaseConnection[];
   loading: boolean;
@@ -140,7 +126,6 @@ export interface DatabaseSidebarProps {
   onTableClick: (tableName: string, database: DatabaseConnection) => void;
   onContextMenu: (e: React.MouseEvent, type: 'database' | 'table', itemName: string, databaseName?: string) => void;
 }
-
 export interface DatabaseItemProps {
   database: DatabaseConnection;
   isExpanded: boolean;
@@ -169,7 +154,6 @@ export interface MainContentAreaProps {
   onToggleAI: () => void;
   onRunQuery: (query: string) => void;
 }
-
 export interface User {
   id: string;
   email: string;
@@ -182,7 +166,6 @@ export interface User {
   created_at: string;
   updated_at: string;
 }
-
 export interface AuthContextType {
   user: User | null;
   token: string | null;
@@ -191,4 +174,17 @@ export interface AuthContextType {
   login: (token: string, user: User) => void;
   logout: () => void;
   updateUser: (user: User) => void;
+}
+
+export interface AIQueryAssistantProps {
+  isOpen: boolean;
+  onToggle: () => void;
+  database: {
+    id: string;
+    name: string;
+    type: string;
+  };
+  selectedTable?: string;
+  onRunQuery: (query: string) => void;
+  className?: string;
 }
