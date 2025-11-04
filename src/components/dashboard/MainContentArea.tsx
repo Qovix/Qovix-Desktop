@@ -1,7 +1,6 @@
 import React from 'react';
 import { AlertCircle, Database, Loader2, RefreshCw } from 'lucide-react';
 import { DatabaseConnection, DatabaseSchema, MainContentAreaProps } from '../../utils/types';
-import AIQueryAssistant from '../database/AIQueryAssistant';
 import { TableDataView } from '../database';
 import { Button } from '../ui';
 import { databaseService } from '../../services/databaseService';
@@ -9,8 +8,11 @@ import { databaseService } from '../../services/databaseService';
 const TableDataViewWrapper: React.FC<{ 
   selectedTable: string; 
   database: DatabaseConnection; 
-  schemas: { [key: string]: DatabaseSchema } 
-}> = React.memo(({ selectedTable, database, schemas }) => {
+  schemas: { [key: string]: DatabaseSchema };
+  isAIOpen: boolean;
+  onToggleAI: () => void;
+  onRunQuery: (query: string) => void;
+}> = React.memo(({ selectedTable, database, schemas, isAIOpen, onToggleAI, onRunQuery }) => {
   const [tableData, setTableData] = React.useState<any[]>([]);
   const [tableLoading, setTableLoading] = React.useState(false);
   const [tableError, setTableError] = React.useState<string | null>(null);
@@ -150,6 +152,14 @@ const TableDataViewWrapper: React.FC<{
       onExportCSV={() => console.log('Export CSV')}
       onEditRow={(row: any, index: number) => console.log('Edit row', row, index)}
       onDeleteRow={(row: any, index: number) => console.log('Delete row', row, index)}
+      database={{
+        id: database.id,
+        name: database.name,
+        type: database.type
+      }}
+      isAIOpen={isAIOpen}
+      onToggleAI={onToggleAI}
+      onRunQuery={onRunQuery}
     />
   );
 });
@@ -202,29 +212,19 @@ const MainContentArea: React.FC<MainContentAreaProps> = ({
       );
     }
 
-    return <TableDataViewWrapper selectedTable={selectedTable} database={selectedDatabase} schemas={schemas} />;
+    return <TableDataViewWrapper 
+      selectedTable={selectedTable} 
+      database={selectedDatabase} 
+      schemas={schemas}
+      isAIOpen={isAIOpen}
+      onToggleAI={onToggleAI}
+      onRunQuery={onRunQuery}
+    />;
   };
 
   return (
-    <div className="flex-1 flex">
-      <div className={`flex-1 flex flex-col ${isAIOpen ? 'mr-0' : ''}`}>
-        {renderTableData()}
-      </div>
-
-      {selectedDatabase && (
-        <AIQueryAssistant
-          isOpen={isAIOpen}
-          onToggle={onToggleAI}
-          database={{
-            id: selectedDatabase.id,
-            name: selectedDatabase.name,
-            type: selectedDatabase.type
-          }}
-          selectedTable={selectedTable || undefined}
-          onRunQuery={onRunQuery}
-          className={isAIOpen ? 'w-96' : 'fixed right-4 top-1/2 transform -translate-y-1/2 z-10'}
-        />
-      )}
+    <div className="flex-1 flex flex-col">
+      {renderTableData()}
     </div>
   );
 };

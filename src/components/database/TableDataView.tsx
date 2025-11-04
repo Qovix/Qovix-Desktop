@@ -11,10 +11,12 @@ import {
   MoreHorizontal,
   Edit,
   Trash2,
-  Copy
+  Copy,
+  Brain
 } from 'lucide-react';
 import { Button, Input } from '../ui';
 import { SortConfig, TableDataViewProps, TableColumn } from 'src/utils/types';
+import AIQueryAssistant from './AIQueryAssistant';
 
 
 const TableDataView: React.FC<TableDataViewProps> = ({
@@ -26,7 +28,11 @@ const TableDataView: React.FC<TableDataViewProps> = ({
   onInsertRow,
   onExportCSV,
   onEditRow,
-  onDeleteRow
+  onDeleteRow,
+  database,
+  isAIOpen = false,
+  onToggleAI,
+  onRunQuery
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState<SortConfig | null>(null);
@@ -147,7 +153,8 @@ const TableDataView: React.FC<TableDataViewProps> = ({
   };
 
   return (
-    <div className="h-full flex flex-col bg-white">
+    <div className="h-full flex">
+      <div className={`flex-1 flex flex-col bg-white ${isAIOpen ? 'mr-0' : ''}`}>
       <div className="flex-shrink-0 border-b border-gray-200 p-4 bg-white">
         <div className="flex items-center justify-between mb-4">
           <div>
@@ -168,6 +175,18 @@ const TableDataView: React.FC<TableDataViewProps> = ({
               <Plus className="h-4 w-4 mr-2" />
               Insert Row
             </Button>
+            
+            {database && onToggleAI && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onToggleAI}
+                className="text-[#bc3a08] hover:text-[#a0340a] hover:bg-orange-50"
+              >
+                <Brain className="h-4 w-4 mr-2" />
+                AI Assistant
+              </Button>
+            )}
             
             <Button
               variant="outline"
@@ -446,6 +465,18 @@ const TableDataView: React.FC<TableDataViewProps> = ({
             </button>
           </div>
         </div>
+      )}
+      </div>
+
+      {database && onToggleAI && onRunQuery && (
+        <AIQueryAssistant
+          isOpen={isAIOpen}
+          onToggle={onToggleAI}
+          database={database}
+          selectedTable={tableName}
+          onRunQuery={onRunQuery}
+          className={isAIOpen ? 'w-96' : 'fixed right-4 top-1/2 transform -translate-y-1/2 z-10'}
+        />
       )}
     </div>
   );
