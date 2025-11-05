@@ -7,7 +7,6 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-
 export const getDatabaseIcon = (type: string) => {
   switch (type) {
     case 'mysql':
