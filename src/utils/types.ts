@@ -18,7 +18,6 @@ export interface TableDataViewProps {
   onExportCSV: () => void;
   onEditRow: (row: TableRow, index: number) => void;
   onDeleteRow: (row: TableRow, index: number) => void;
-  // AI Assistant props
   database?: {
     id: string;
     name: string;
