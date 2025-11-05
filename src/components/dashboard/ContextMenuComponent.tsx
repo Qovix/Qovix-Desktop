@@ -4,7 +4,8 @@ import {
   WifiOff, 
   Settings, 
   Eye, 
-  Trash2 
+  Trash2,
+  Terminal
 } from 'lucide-react';
 import { ContextMenu, DatabaseConnection } from '../../utils/types';
 
@@ -46,6 +47,16 @@ const ContextMenuComponent: React.FC<ContextMenuComponentProps> = memo(({
             >
               <WifiOff className="h-4 w-4" />
               <span>Disconnect</span>
+            </button>
+          )}
+          
+          {databases.find(db => db.id === contextMenu.itemName)?.status === 'connected' && (
+            <button
+              onClick={() => onAction('query-console')}
+              className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
+            >
+              <Terminal className="h-4 w-4" />
+              <span>Query Console</span>
             </button>
           )}
           

@@ -312,6 +312,20 @@ export default function Dashboard({
           handleDisconnectFromSidebar(database);
         }
         break;
+      case 'query-console':
+        if (contextMenu.type === 'database' && database) {
+          openTab({
+            id: `query-console-${database.id}`,
+            type: 'query-console',
+            title: `Query Console - ${database.name}`,
+            icon: 'terminal',
+            data: {
+              database: database,
+              initialQuery: ''
+            }
+          });
+        }
+        break;
       case 'open-in-tab':
         if (contextMenu.type === 'table' && contextMenu.databaseName) {
           const tableDatabase = databases.find(db => db.id === contextMenu.databaseName);
