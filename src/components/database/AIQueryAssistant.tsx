@@ -231,12 +231,10 @@ const AIQueryAssistant: React.FC<AIQueryAssistantProps> = memo(({
                 dangerouslySetInnerHTML={{ __html: formatMessage(message.content) }}
               />
               
-                            {message.sql_query && (
+              {message.sql_query && (
                 <div className="mt-3 p-3 bg-gray-800 rounded text-green-400 font-mono text-xs">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center space-x-2">
-                      <Code className="h-3 w-3" />
-                      <span className="text-green-300 font-medium">Generated SQL</span>
                     </div>
                     <div className="flex items-center space-x-1">
                       <Button
