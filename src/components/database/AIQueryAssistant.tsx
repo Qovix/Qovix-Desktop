@@ -132,17 +132,8 @@ const AIQueryAssistant: React.FC<AIQueryAssistantProps> = memo(({
 
   if (!isOpen) {
     return (
-      <div className={`${className}`}>
-        <Button
-          onClick={onToggle}
-          className="bg-[#bc3a08] hover:bg-[#a0340a] text-white shadow-lg h-12 px-4 rounded-l-lg rounded-r-none border-r-0"
-          title="Open AI Assistant"
-        >
-          <Brain className="h-5 w-5 mr-2" />
-          <span className="hidden lg:inline">AI Assistant</span>
-          <ChevronLeft className="h-4 w-4 ml-2" />
-        </Button>
-      </div>
+      <>
+      </>
     );
   }
 
