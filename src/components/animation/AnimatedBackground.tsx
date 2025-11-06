@@ -33,7 +33,7 @@ export const AnimatedBackground = memo(function AnimatedBackground() {
     <>
       <motion.div
         className="absolute top-1/4 -left-20 w-96 h-96 rounded-full opacity-10 blur-3xl"
-        style={{ background: 'radial-gradient(circle, #bc3a08 0%, transparent 70%)' }}
+        style={{ background: 'radial-gradient(circle, #a73001ff 0%, transparent 70%)' }}
         animate={{
           scale: [1, 1.2, 1],
           x: [0, 50, 0],
@@ -48,7 +48,7 @@ export const AnimatedBackground = memo(function AnimatedBackground() {
 
       <motion.div
         className="absolute bottom-1/4 -right-20 w-96 h-96 rounded-full opacity-10 blur-3xl"
-        style={{ background: 'radial-gradient(circle, #bc3a08 0%, transparent 70%)' }}
+        style={{ background: 'radial-gradient(circle, #9d2d02ff 0%, transparent 70%)' }}
         animate={{
           scale: [1.2, 1, 1.2],
           x: [0, -50, 0],
@@ -106,7 +106,7 @@ export const AnimatedBackground = memo(function AnimatedBackground() {
               <path
                 d="M 40 0 L 0 0 0 40"
                 fill="none"
-                stroke="#bc3a08"
+                stroke="#a53103ff"
                 strokeWidth="0.5"
               />
             </pattern>
@@ -119,7 +119,7 @@ export const AnimatedBackground = memo(function AnimatedBackground() {
         <motion.path
           d="M 0,50 Q 200,100 400,50 T 800,50"
           fill="none"
-          stroke="#bc3a08"
+          stroke="#a32f01ff"
           strokeWidth="1"
           opacity="0.1"
           initial={{ pathLength: 0, opacity: 0 }}
@@ -133,7 +133,7 @@ export const AnimatedBackground = memo(function AnimatedBackground() {
         <motion.path
           d="M 1200,200 Q 1000,300 800,200 T 400,200"
           fill="none"
-          stroke="#bc3a08"
+          stroke="#a12f02ff"
           strokeWidth="1"
           opacity="0.1"
           initial={{ pathLength: 0, opacity: 0 }}
@@ -147,7 +147,7 @@ export const AnimatedBackground = memo(function AnimatedBackground() {
         <motion.path
           d="M 600,600 Q 400,500 200,600 T -200,600"
           fill="none"
-          stroke="#bc3a08"
+          stroke="#982b00ff"
           strokeWidth="1"
           opacity="0.1"
           initial={{ pathLength: 0, opacity: 0 }}
@@ -178,13 +178,13 @@ export const AnimatedBackground = memo(function AnimatedBackground() {
             width="60"
             height="60"
             fill="none"
-            stroke="#bc3a08"
+            stroke="#942b02ff"
             strokeWidth="2"
           />
-          <line x1="10" y1="30" x2="70" y2="30" stroke="#bc3a08" strokeWidth="2" />
+          <line x1="10" y1="30" x2="70" y2="30" stroke="#972d03ff" strokeWidth="2" />
           <line x1="10" y1="45" x2="70" y2="45" stroke="#bc3a08" strokeWidth="1" />
-          <line x1="10" y1="55" x2="70" y2="55" stroke="#bc3a08" strokeWidth="1" />
-          <line x1="35" y1="10" x2="35" y2="70" stroke="#bc3a08" strokeWidth="1" />
+          <line x1="10" y1="55" x2="70" y2="55" stroke="#902a02ff" strokeWidth="1" />
+          <line x1="35" y1="10" x2="35" y2="70" stroke="#ae3201ff" strokeWidth="1" />
         </svg>
       </motion.div>
 
@@ -208,13 +208,13 @@ export const AnimatedBackground = memo(function AnimatedBackground() {
             width="60"
             height="60"
             fill="none"
-            stroke="#bc3a08"
+            stroke="#9d2c00ff"
             strokeWidth="2"
           />
-          <line x1="10" y1="30" x2="70" y2="30" stroke="#bc3a08" strokeWidth="2" />
-          <line x1="10" y1="45" x2="70" y2="45" stroke="#bc3a08" strokeWidth="1" />
-          <line x1="10" y1="55" x2="70" y2="55" stroke="#bc3a08" strokeWidth="1" />
-          <line x1="35" y1="10" x2="35" y2="70" stroke="#bc3a08" strokeWidth="1" />
+          <line x1="10" y1="30" x2="70" y2="30" stroke="#9e2f03ff" strokeWidth="2" />
+          <line x1="10" y1="45" x2="70" y2="45" stroke="#a73102ff" strokeWidth="1" />
+          <line x1="10" y1="55" x2="70" y2="55" stroke="#b13402ff" strokeWidth="1" />
+          <line x1="35" y1="10" x2="35" y2="70" stroke="#aa3101ff" strokeWidth="1" />
         </svg>
       </motion.div>
 
