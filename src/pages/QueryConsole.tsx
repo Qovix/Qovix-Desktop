@@ -18,6 +18,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
+import { databaseService } from '../services/databaseService';
 
 interface QueryResult {
   id: string;
@@ -74,25 +75,11 @@ const QueryConsole: React.FC<QueryConsoleProps> = ({
   
   const [activeTabId, setActiveTabId] = useState('1');
   const [results, setResults] = useState<QueryResult[]>([]);
-  const [history, setHistory] = useState<QueryHistoryItem[]>([
-    {
-      id: '1',
-      query: 'SELECT * FROM users LIMIT 10;',
-      timestamp: new Date(Date.now() - 1000 * 60 * 30),
-      duration: 125,
-      status: 'success'
-    },
-    {
-      id: '2',
-      query: 'SELECT COUNT(*) FROM orders WHERE status = "completed";',
-      timestamp: new Date(Date.now() - 1000 * 60 * 45),
-      duration: 89,
-      status: 'success'
-    }
-  ]);
+  const [history, setHistory] = useState<QueryHistoryItem[]>([]);
   
   const [showHistory, setShowHistory] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
+  const [currentAbortController, setCurrentAbortController] = useState<AbortController | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const activeTab = tabs.find(tab => tab.id === activeTabId);
@@ -104,8 +91,21 @@ const QueryConsole: React.FC<QueryConsoleProps> = ({
     }
   }, [activeTab?.query]);
 
+  // Cleanup: abort any running queries when component unmounts
+  useEffect(() => {
+    return () => {
+      if (currentAbortController) {
+        currentAbortController.abort();
+      }
+    };
+  }, [currentAbortController]);
+
   const executeQuery = async () => {
     if (!activeTab?.query.trim() || isRunning) return;
+
+    // Create abort controller for this query
+    const abortController = new AbortController();
+    setCurrentAbortController(abortController);
 
     setIsRunning(true);
     const startTime = Date.now();
@@ -120,68 +120,95 @@ const QueryConsole: React.FC<QueryConsoleProps> = ({
     setResults(prev => [result, ...prev]);
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
+      // Execute the actual query using the database service
+      const queryResult = await databaseService.executeQuery(
+        database.id, 
+        activeTab.query.trim(), 
+        1000,
+        abortController.signal
+      );
       
-      const isSelectQuery = activeTab.query.toLowerCase().trim().startsWith('select');
-      const isCountQuery = activeTab.query.toLowerCase().includes('count');
-      
-      let mockData: any[] = [];
-      let columns: string[] = [];
-      
-      if (isSelectQuery) {
-        if (isCountQuery) {
-          columns = ['count'];
-          mockData = [{ count: Math.floor(Math.random() * 10000) }];
-        } else {
-          columns = ['id', 'name', 'email', 'created_at'];
-          mockData = Array.from({ length: Math.floor(Math.random() * 20) + 5 }, (_, i) => ({
-            id: i + 1,
-            name: `User ${i + 1}`,
-            email: `user${i + 1}@example.com`,
-            created_at: new Date(Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 30).toISOString()
-          }));
-        }
+      // Check if the query was cancelled
+      if (abortController.signal.aborted) {
+        return;
       }
 
       const duration = Date.now() - startTime;
-      const success = Math.random() > 0.1;
+
+      // Convert the backend response format to our frontend format
+      // Handle case where rows is null (empty result set)
+      const data = queryResult.rows ? queryResult.rows.map(row => {
+        const rowObject: any = {};
+        queryResult.columns.forEach((column, index) => {
+          rowObject[column] = row[index];
+        });
+        return rowObject;
+      }) : [];
 
       const updatedResult: QueryResult = {
         ...result,
-        status: success ? 'success' : 'error',
-        data: success ? mockData : undefined,
-        columns: success ? columns : undefined,
-        rowCount: success ? mockData.length : undefined,
+        status: 'success',
+        data: data,
+        columns: queryResult.columns,
+        rowCount: queryResult.count,
         duration,
-        error: success ? undefined : 'Table "unknown_table" doesn\'t exist'
       };
 
       setResults(prev => prev.map(r => r.id === result.id ? updatedResult : r));
 
+      // Add to query history
       setHistory(prev => [{
         id: result.id,
         query: result.query,
         timestamp: result.timestamp,
         duration,
-        status: success ? 'success' : 'error'
+        status: 'success'
       }, ...prev]);
 
     } catch (error) {
+      // Check if the query was cancelled
+      if (abortController.signal.aborted) {
+        const updatedResult: QueryResult = {
+          ...result,
+          status: 'error',
+          error: 'Query was cancelled',
+          duration: Date.now() - startTime
+        };
+        setResults(prev => prev.map(r => r.id === result.id ? updatedResult : r));
+        return;
+      }
+
+      const duration = Date.now() - startTime;
+      
       const updatedResult: QueryResult = {
         ...result,
         status: 'error',
-        error: 'Connection failed',
-        duration: Date.now() - startTime
+        error: error instanceof Error ? error.message : 'An unexpected error occurred',
+        duration
       };
       
       setResults(prev => prev.map(r => r.id === result.id ? updatedResult : r));
+
+      // Add to query history even for failed queries
+      setHistory(prev => [{
+        id: result.id,
+        query: result.query,
+        timestamp: result.timestamp,
+        duration,
+        status: 'error'
+      }, ...prev]);
     } finally {
       setIsRunning(false);
+      setCurrentAbortController(null);
     }
   };
 
   const stopQuery = () => {
+    if (currentAbortController) {
+      currentAbortController.abort();
+    }
     setIsRunning(false);
+    setCurrentAbortController(null);
   };
 
   const updateQuery = (query: string) => {

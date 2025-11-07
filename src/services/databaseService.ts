@@ -1,4 +1,4 @@
-import { DatabaseConnectionData } from '../components/database/DatabaseConnectionModal';
+import { DatabaseConnectionData } from "../utils/types";
 
 export interface DatabaseConnection {
   id: string;
@@ -154,7 +154,7 @@ class DatabaseService {
     return data.data;
   }
 
-  async executeQuery(connectionId: string, query: string, limit?: number): Promise<QueryResult> {
+  async executeQuery(connectionId: string, query: string, limit?: number, signal?: AbortSignal): Promise<QueryResult> {
     const response = await fetch(`${this.baseUrl}/connections/${connectionId}/query`, {
       method: 'POST',
       headers: this.getAuthHeaders(),
@@ -163,6 +163,7 @@ class DatabaseService {
         query: query,
         limit: limit || 100,
       }),
+      signal: signal,
     });
 
     const data = await response.json();
