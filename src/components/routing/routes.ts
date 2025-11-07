@@ -1,3 +1,5 @@
+import { RouteConfig } from "../../utils/types";
+
 export const ROUTES = {
   AUTH: {
     LOGIN: '/auth/login',
@@ -14,14 +16,6 @@ export const ROUTES = {
   HOME: '/',
   NOT_FOUND: '/404',
 } as const;
-
-export interface RouteConfig {
-  path: string;
-  requireAuth: boolean;
-  requireVerification: boolean;
-  title: string;
-  description?: string;
-}
 
 export const ROUTE_CONFIG: Record<string, RouteConfig> = {
   [ROUTES.AUTH.LOGIN]: {

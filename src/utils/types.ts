@@ -245,3 +245,11 @@ export interface SignupFormData {
   lastName: string;
   username: string;
 }
+
+export interface RouteConfig {
+  path: string;
+  requireAuth: boolean;
+  requireVerification: boolean;
+  title: string;
+  description?: string;
+}
