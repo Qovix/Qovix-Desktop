@@ -10,15 +10,7 @@ import { AnimatedBackground } from '../../components/animation/AnimatedBackgroun
 import { useAuth } from '../../context/AuthContext';
 import { useAppNavigation } from '../../hooks/useAppNavigation';
 import { ROUTES } from '../../components/routing/routes';
-
-interface SignupFormData {
-  email: string;
-  password: string;
-  confirmPassword: string;
-  firstName: string;
-  lastName: string;
-  username: string;
-}
+import { SignupFormData } from '../../utils/types';
 
 export default function Signup() {
   const { login } = useAuth();

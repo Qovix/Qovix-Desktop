@@ -236,3 +236,12 @@ export interface DatabaseConnectionData {
   version?: string;
   schemas?: string[];
 }
+
+export interface SignupFormData {
+  email: string;
+  password: string;
+  confirmPassword: string;
+  firstName: string;
+  lastName: string;
+  username: string;
+}
