@@ -70,14 +70,14 @@ const QueryConsole: React.FC<QueryConsoleProps> = ({
       isModified: false
     }
   ]);
-  
+
   const [activeTabId, setActiveTabId] = useState('1');
   const [history, setHistory] = useState<QueryHistoryItem[]>([]);
-  
+
   const [showHistory, setShowHistory] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
   const [currentAbortController, setCurrentAbortController] = useState<AbortController | null>(null);
-  
+
   // Bottom sheet state
   const [showBottomSheet, setShowBottomSheet] = useState(false);
   const [bottomSheetHeight, setBottomSheetHeight] = useState(400); // Default height
@@ -91,11 +91,9 @@ const QueryConsole: React.FC<QueryConsoleProps> = ({
     query: string;
     duration?: number;
   } | null>(null);
-  
+
   // Query input state
-  const [showQueryInput, setShowQueryInput] = useState(true);
-  const [floatingQuery, setFloatingQuery] = useState('');
-  
+
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const bottomSheetRef = useRef<HTMLDivElement>(null);
   const resizeRef = useRef<HTMLDivElement>(null);
@@ -122,12 +120,12 @@ const QueryConsole: React.FC<QueryConsoleProps> = ({
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isResizing) return;
-      
+
       const windowHeight = window.innerHeight;
       const newHeight = windowHeight - e.clientY;
       const minHeight = 200;
       const maxHeight = windowHeight - 200;
-      
+
       setBottomSheetHeight(Math.max(minHeight, Math.min(maxHeight, newHeight)));
     };
 
@@ -163,7 +161,7 @@ const QueryConsole: React.FC<QueryConsoleProps> = ({
   };
 
   const executeQuery = async (queryText?: string) => {
-    const queryToExecute = queryText || activeTab?.query.trim() || floatingQuery.trim();
+    const queryToExecute = queryText || activeTab?.query.trim()
     if (!queryToExecute || isRunning) return;
 
     // Create abort controller for this query
@@ -183,12 +181,12 @@ const QueryConsole: React.FC<QueryConsoleProps> = ({
     try {
       // Execute the actual query using the database service
       const queryResult = await databaseService.executeQuery(
-        database.id, 
-        queryToExecute, 
+        database.id,
+        queryToExecute,
         1000,
         abortController.signal
       );
-      
+
       // Check if the query was cancelled
       if (abortController.signal.aborted) {
         return;
@@ -222,14 +220,14 @@ const QueryConsole: React.FC<QueryConsoleProps> = ({
       }
 
       const duration = Date.now() - startTime;
-      
+
       const updatedResult: QueryResult = {
         ...result,
         status: 'error',
         error: error instanceof Error ? error.message : 'An unexpected error occurred',
         duration
       };
-      
+
       // Show error in bottom sheet as well
       setBottomSheetData({
         columns: [],
@@ -265,8 +263,8 @@ const QueryConsole: React.FC<QueryConsoleProps> = ({
   };
 
   const updateQuery = (query: string) => {
-    setTabs(prev => prev.map(tab => 
-      tab.id === activeTabId 
+    setTabs(prev => prev.map(tab =>
+      tab.id === activeTabId
         ? { ...tab, query, isModified: query !== initialQuery }
         : tab
     ));
@@ -284,8 +282,8 @@ const QueryConsole: React.FC<QueryConsoleProps> = ({
   };
 
   const closeTab = (tabId: string) => {
-    if (tabs.length === 1) return; 
-    
+    if (tabs.length === 1) return;
+
     setTabs(prev => prev.filter(tab => tab.id !== tabId));
     if (activeTabId === tabId) {
       const remainingTabs = tabs.filter(tab => tab.id !== tabId);
@@ -327,16 +325,6 @@ const QueryConsole: React.FC<QueryConsoleProps> = ({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setShowQueryInput(!showQueryInput)}
-              className={showQueryInput ? 'bg-gray-100' : ''}
-            >
-              <Code className="h-4 w-4 mr-2" />
-              {showQueryInput ? 'Hide' : 'Show'} Input
-            </Button>
-
-            <Button
-              variant="outline"
-              size="sm"
               className="text-gray-600 hover:text-gray-900"
             >
               <Save className="h-4 w-4 mr-2" />
@@ -353,7 +341,7 @@ const QueryConsole: React.FC<QueryConsoleProps> = ({
               <h3 className="font-medium text-gray-900">Query History</h3>
               <p className="text-sm text-gray-500 mt-1">Recent queries</p>
             </div>
-            
+
             <div className="flex-1 overflow-y-auto p-4 space-y-2">
               {history.map((item) => (
                 <div
@@ -378,7 +366,7 @@ const QueryConsole: React.FC<QueryConsoleProps> = ({
                       </span>
                     )}
                   </div>
-                  
+
                   <div className="text-sm text-gray-700 font-mono bg-gray-100 p-2 rounded truncate group-hover:bg-gray-50">
                     {item.query}
                   </div>
@@ -389,108 +377,94 @@ const QueryConsole: React.FC<QueryConsoleProps> = ({
         )}
 
         {/* Main Content Area */}
-        <div 
-          className="flex-1 flex flex-col bg-gray-50" 
-          style={{ 
+        <div
+          className="flex-1 flex flex-col bg-gray-50"
+          style={{
             paddingBottom: showBottomSheet ? `${bottomSheetHeight}px` : 0,
             transition: showBottomSheet ? 'none' : 'padding-bottom 0.3s ease-out'
           }}
         >
-          {/* Collapsible Query Input */}
-          {showQueryInput && (
-            <div className="bg-white border-b border-gray-200 flex-shrink-0">
-              {/* Tabs */}
-              <div className="border-b border-gray-200 bg-gray-50">
-                <div className="flex items-center">
-                  {tabs.map((tab) => (
-                    <div
-                      key={tab.id}
-                      className={`flex items-center space-x-2 px-4 py-2 border-r border-gray-200 cursor-pointer ${
-                        activeTabId === tab.id ? 'bg-white border-b-2 border-[#bc3a08]' : 'bg-gray-50 hover:bg-gray-100'
+          <div className="bg-white border-b border-gray-200 flex-shrink-0">
+            {/* Tabs */}
+            <div className="border-b border-gray-200 bg-gray-50">
+              <div className="flex items-center">
+                {tabs.map((tab) => (
+                  <div
+                    key={tab.id}
+                    className={`flex items-center space-x-2 px-4 py-2 border-r border-gray-200 cursor-pointer ${activeTabId === tab.id ? 'bg-white border-b-2 border-[#bc3a08]' : 'bg-gray-50 hover:bg-gray-100'
                       }`}
-                      onClick={() => setActiveTabId(tab.id)}
-                    >
-                      <FileText className="h-4 w-4" />
-                      <span className="text-sm">
-                        {tab.name}
-                        {tab.isModified && '*'}
-                      </span>
-                      {tabs.length > 1 && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            closeTab(tab.id);
-                          }}
-                          className="p-1 hover:bg-gray-200 rounded"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                  
-                  <button
-                    onClick={addNewTab}
-                    className="p-2 hover:bg-gray-100 text-gray-600"
+                    onClick={() => setActiveTabId(tab.id)}
                   >
-                    <Plus className="h-4 w-4" />
-                  </button>
+                    <FileText className="h-4 w-4" />
+                    <span className="text-sm">
+                      {tab.name}
+                      {tab.isModified && '*'}
+                    </span>
+                    {tabs.length > 1 && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          closeTab(tab.id);
+                        }}
+                        className="p-1 hover:bg-gray-200 rounded"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+
+                <button
+                  onClick={addNewTab}
+                  className="p-2 hover:bg-gray-100 text-gray-600"
+                >
+                  <Plus className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Query Input Area */}
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center space-x-2">
+                  <h3 className="text-sm font-medium text-gray-700">SQL Query</h3>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  {isRunning ? (
+                    <Button
+                      onClick={stopQuery}
+                      size="sm"
+                      variant="outline"
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <Square className="h-4 w-4 mr-2" />
+                      Stop
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={handleExecuteClick}
+                      size="sm"
+                      className="bg-[#bc3a08] hover:bg-[#a0340a] text-white"
+                      disabled={!activeTab?.query.trim()}
+                    >
+                      <Play className="h-4 w-4 mr-2" />
+                      Execute
+                    </Button>
+                  )}
                 </div>
               </div>
 
-              {/* Query Input Area */}
-              <div className="p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center space-x-2">
-                    <h3 className="text-sm font-medium text-gray-700">SQL Query</h3>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    {isRunning ? (
-                      <Button
-                        onClick={stopQuery}
-                        size="sm"
-                        variant="outline"
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                      >
-                        <Square className="h-4 w-4 mr-2" />
-                        Stop
-                      </Button>
-                    ) : (
-                      <Button
-                        onClick={handleExecuteClick}
-                        size="sm"
-                        className="bg-[#bc3a08] hover:bg-[#a0340a] text-white"
-                        disabled={!activeTab?.query.trim() && !floatingQuery.trim()}
-                      >
-                        <Play className="h-4 w-4 mr-2" />
-                        Execute
-                      </Button>
-                    )}
-                  </div>
-                </div>
-                
-                <textarea
-                  ref={textareaRef}
-                  value={activeTab?.query || ''}
-                  onChange={(e) => updateQuery(e.target.value)}
-                  placeholder="Enter your SQL query here... (Ctrl/Cmd + Enter to execute)"
-                  className="w-full p-3 border border-gray-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-[#bc3a08] focus:border-transparent resize-none"
-                  style={{ minHeight: '120px' }}
-                />
-                
-                <div className="mt-2 text-xs text-gray-500 flex justify-between">
-                  <span>Press Ctrl/Cmd+Enter to execute • Ctrl/Cmd+\ to toggle input</span>
-                  <button
-                    onClick={() => setShowQueryInput(false)}
-                    className="text-gray-400 hover:text-gray-600"
-                  >
-                    <Minimize2 className="h-3 w-3" />
-                  </button>
-                </div>
-              </div>
+              <textarea
+                ref={textareaRef}
+                value={activeTab?.query || ''}
+                onChange={(e) => updateQuery(e.target.value)}
+                placeholder="Enter your SQL query here... (Ctrl/Cmd + Enter to execute)"
+                className="w-full p-3 border border-gray-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-[#bc3a08] focus:border-transparent resize-none"
+                style={{ minHeight: '120px' }}
+              />
             </div>
-          )}
+          </div>
 
           {/* Main workspace area */}
           <div className="flex-1 p-6 flex items-center justify-center">
@@ -501,33 +475,8 @@ const QueryConsole: React.FC<QueryConsoleProps> = ({
                   Ready to Execute Queries
                 </h3>
                 <p className="text-gray-600 mb-4">
-                  {showQueryInput 
-                    ? 'Write your SQL query above and press Execute to see results' 
-                    : 'Press Ctrl/Cmd+\\ to show query input or type anywhere to start writing'
-                  }
+                  Write your SQL query above and press Execute to see results
                 </p>
-                {!showQueryInput && (
-                  <div className="max-w-md mx-auto">
-                    <textarea
-                      value={floatingQuery}
-                      onChange={(e) => setFloatingQuery(e.target.value)}
-                      placeholder="Type your SQL query here..."
-                      className="w-full p-3 border border-gray-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-[#bc3a08] focus:border-transparent resize-none"
-                      style={{ minHeight: '120px' }}
-                    />
-                    <div className="mt-3 flex justify-center">
-                      <Button
-                        onClick={handleExecuteClick}
-                        size="sm"
-                        className="bg-[#bc3a08] hover:bg-[#a0340a] text-white"
-                        disabled={!floatingQuery.trim()}
-                      >
-                        <Play className="h-4 w-4 mr-2" />
-                        Execute Query
-                      </Button>
-                    </div>
-                  </div>
-                )}
               </div>
             ) : (
               <div className="w-full h-full flex items-center justify-center text-gray-500">
@@ -545,7 +494,7 @@ const QueryConsole: React.FC<QueryConsoleProps> = ({
           <div
             ref={bottomSheetRef}
             className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-2xl z-50"
-            style={{ 
+            style={{
               height: `${bottomSheetHeight}px`,
               transition: isResizing ? 'none' : 'height 0.3s ease-out'
             }}
@@ -576,7 +525,7 @@ const QueryConsole: React.FC<QueryConsoleProps> = ({
                   {bottomSheetData.count} rows • {bottomSheetData.duration}ms
                 </span>
               </div>
-              
+
               <div className="flex items-center space-x-2">
                 <Button
                   variant="outline"
@@ -587,7 +536,7 @@ const QueryConsole: React.FC<QueryConsoleProps> = ({
                   <Copy className="h-4 w-4 mr-1" />
                   Copy Query
                 </Button>
-                
+
                 <Button
                   variant="outline"
                   size="sm"
@@ -625,7 +574,7 @@ const QueryConsole: React.FC<QueryConsoleProps> = ({
                       {bottomSheetData.rows.length} row{bottomSheetData.rows.length !== 1 ? 's' : ''} • {bottomSheetData.columns.length} column{bottomSheetData.columns.length !== 1 ? 's' : ''}
                     </p>
                   </div>
-                  
+
                   {/* Table container with horizontal scroll */}
                   <div className="flex-1 overflow-auto">
                     <div className="min-w-full">
@@ -635,7 +584,7 @@ const QueryConsole: React.FC<QueryConsoleProps> = ({
                             {/* Row count header */}
                             <th
                               className="px-3 py-3 text-center text-sm font-medium text-gray-500 border-b border-gray-200 bg-gray-100"
-                              style={{ 
+                              style={{
                                 width: '50px',
                                 minWidth: '50px',
                                 maxWidth: '50px',
@@ -650,7 +599,7 @@ const QueryConsole: React.FC<QueryConsoleProps> = ({
                               <th
                                 key={`${column}-${index}`}
                                 className="px-4 py-3 text-left text-sm font-medium text-gray-700 border-b border-gray-200 whitespace-nowrap"
-                                style={{ 
+                                style={{
                                   minWidth: '180px',
                                   maxWidth: '300px',
                                   width: bottomSheetData.columns.length <= 4 ? 'auto' : '200px'
@@ -669,16 +618,14 @@ const QueryConsole: React.FC<QueryConsoleProps> = ({
                           {bottomSheetData.rows.map((row, rowIndex) => (
                             <tr
                               key={rowIndex}
-                              className={`border-b border-gray-100 ${
-                                rowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'
-                              } hover:bg-blue-50`}
+                              className={`border-b border-gray-100 ${rowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                                } hover:bg-blue-50`}
                             >
                               {/* Row count cell */}
                               <td
-                                className={`px-3 py-3 text-center text-xs font-medium text-gray-500 border-r border-gray-200 ${
-                                  rowIndex % 2 === 0 ? 'bg-gray-50' : 'bg-gray-100'
-                                }`}
-                                style={{ 
+                                className={`px-3 py-3 text-center text-xs font-medium text-gray-500 border-r border-gray-200 ${rowIndex % 2 === 0 ? 'bg-gray-50' : 'bg-gray-100'
+                                  }`}
+                                style={{
                                   width: '50px',
                                   minWidth: '50px',
                                   maxWidth: '50px',
@@ -693,7 +640,7 @@ const QueryConsole: React.FC<QueryConsoleProps> = ({
                                 <td
                                   key={`${rowIndex}-${cellIndex}`}
                                   className="px-4 py-3 text-sm text-gray-900 whitespace-nowrap"
-                                  style={{ 
+                                  style={{
                                     minWidth: '180px',
                                     maxWidth: '300px',
                                     width: bottomSheetData.columns.length <= 4 ? 'auto' : '200px'
@@ -714,7 +661,7 @@ const QueryConsole: React.FC<QueryConsoleProps> = ({
                       </table>
                     </div>
                   </div>
-                  
+
                   {bottomSheetData.rows.length > 50 && (
                     <div className="flex-shrink-0 px-4 py-2 bg-gray-50 border-t border-gray-200 text-center">
                       <p className="text-sm text-gray-600">
