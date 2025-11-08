@@ -18,7 +18,6 @@ const Button = React.memo(React.forwardRef<HTMLButtonElement, ButtonProps>(
       ghost: "hover:bg-accent hover:text-accent-foreground",
       link: "text-primary underline-offset-4 hover:underline",
     };
-    
     const sizes = {
       default: "h-9 px-4 py-2",
       sm: "h-8 rounded-md px-3",
