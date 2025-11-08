@@ -253,3 +253,42 @@ export interface RouteConfig {
   title: string;
   description?: string;
 }
+
+export interface QueryResult {
+  id: string;
+  query: string;
+  status: 'success' | 'error' | 'running';
+  data?: any[];
+  columns?: string[];
+  rowCount?: number;
+  duration?: number;
+  error?: string;
+  timestamp: Date;
+}
+
+export interface QueryHistoryItem {
+  id: string;
+  query: string;
+  timestamp: Date;
+  duration?: number;
+  status: 'success' | 'error';
+}
+
+export interface QueryTab {
+  id: string;
+  name: string;
+  query: string;
+  isModified: boolean;
+}
+
+export interface QueryConsoleProps {
+  database: {
+    id: string;
+    name: string;
+    type: string;
+    host: string;
+    port: number;
+  };
+  onBack: () => void;
+  initialQuery?: string;
+}

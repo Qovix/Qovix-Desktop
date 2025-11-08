@@ -12,50 +12,10 @@ import {
   Terminal,
   CheckCircle,
   XCircle,
-  Minimize2,
-  Code
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { databaseService } from '../services/databaseService';
-
-interface QueryResult {
-  id: string;
-  query: string;
-  status: 'success' | 'error' | 'running';
-  data?: any[];
-  columns?: string[];
-  rowCount?: number;
-  duration?: number;
-  error?: string;
-  timestamp: Date;
-}
-
-interface QueryHistoryItem {
-  id: string;
-  query: string;
-  timestamp: Date;
-  duration?: number;
-  status: 'success' | 'error';
-}
-
-interface QueryTab {
-  id: string;
-  name: string;
-  query: string;
-  isModified: boolean;
-}
-
-interface QueryConsoleProps {
-  database: {
-    id: string;
-    name: string;
-    type: string;
-    host: string;
-    port: number;
-  };
-  onBack: () => void;
-  initialQuery?: string;
-}
+import { QueryConsoleProps, QueryHistoryItem, QueryResult, QueryTab } from '../utils/types';
 
 const QueryConsole: React.FC<QueryConsoleProps> = ({
   database,
