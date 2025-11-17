@@ -265,7 +265,6 @@ export interface QueryResult {
   error?: string;
   timestamp: Date;
 }
-
 export interface QueryHistoryItem {
   id: string;
   query: string;
@@ -273,14 +272,12 @@ export interface QueryHistoryItem {
   duration?: number;
   status: 'success' | 'error';
 }
-
 export interface QueryTab {
   id: string;
   name: string;
   query: string;
   isModified: boolean;
 }
-
 export interface QueryConsoleProps {
   database: {
     id: string;
